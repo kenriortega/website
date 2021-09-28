@@ -40,6 +40,7 @@ const theme = extendTheme({
     },
     sizes: {
         container: {
+            "1sm": "700px",
             "1xl": "1250px",
             "2xl": "1440px",
         }

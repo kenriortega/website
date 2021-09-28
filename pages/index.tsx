@@ -16,7 +16,11 @@ export default function Home({ posts }) {
   return (
     <Layout>
       <Meta title="Kenriortega | blog" />
-      <Container maxW="container.2xl" px={[0, 4]}>
+      <Container maxW="container.1sm" px={[0, 4]}>
+        <Heading as="h2" m={8} size="md">
+          Hola 👋 soy Enrique Ortega conocido por @kenriortega y este es mi blog!!
+        </Heading>
+
         <Flex
           d="flex"
           direction={["column", "column", "column", "column", "row"]}
