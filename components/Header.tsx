@@ -88,17 +88,12 @@ const MenuLinks = ({ isOpen, }) => {
                 <MenuItem to="/"
                     className="link-name"
                     textStyle="linkName"
-                > 🏠 Blog
+                > 🏠 Home
                 </MenuItem>
                 <MenuItem to="/"
                     className="link-name"
                     textStyle="linkName"
                 > 🏠 About me
-                </MenuItem>
-                <MenuItem to="/"
-                    className="link-name"
-                    textStyle="linkName"
-                > 🏠 CV
                 </MenuItem>
             </Stack>
         </Box >

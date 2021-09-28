@@ -1,44 +1,53 @@
 
-import { Box, Center, Heading } from '@chakra-ui/react'
+import { Box, Container, Flex, Heading, } from "../components/elements"
+
 import Link from 'next/link'
-import React, { Fragment } from 'react'
+import React from 'react'
 import Layout from '../components/Layout'
 import Meta from "../components/Meta"
+import { PostListItem, } from '../components/PostListItem'
 import { getAllFilesMetadata } from '../lib/mdx'
+import { useStylesApp } from '../hooks/useStylesApp'
+import { formatDate } from "../lib/format-date";
 export default function Home({ posts }) {
+  const { border, colorBase } = useStylesApp()
+  const width = "100%";
+
   return (
     <Layout>
       <Meta title="Kenriortega | blog" />
-      <main className={"main"}>
-        <h1 className={"title"} >
-          Blog personal
-        </h1>
-        <p className={"description"}>
-          Desarrollador Backend:
-          <span className={"description"}>
-            <a href="https://github.com/kenriortega">@kenriortega!</a>
-          </span>
-        </p>
-        <div className={'grid'}>
-          {posts.map((post) => (
-            <Fragment key={post.slug}>
-              <>
-                <Link href={`/blog/${post.slug}`}>
-                  <span className={"card"} >
-                    <Box w="500" >
-                      <p>{post.title}</p>
-                      <h5>{post.tags}</h5>
-                      <h5>
-                        {post.date}
-                      </h5>
-                    </Box>
-                  </span>
-                </Link>
-              </>
-            </Fragment>
-          ))}
-        </div>
-      </main>
+      <Container maxW="container.2xl" px={[0, 4]}>
+        <Flex
+          d="flex"
+          direction={["column", "column", "column", "column", "row"]}
+          mx="auto"
+        >
+          <Box
+            as="article"
+            bg="white"
+            p={[4, 4, 8, 16]}
+            mx={[0, 0, 0, 0, 4]}
+            my={4}
+            borderRadius="lg"
+            width={["100%", "100%", "100%", "100%", width]}
+          >
+            <Heading as="h1" m={8} size="2xl">
+              Últimos Artículos
+            </Heading>
+            {posts.map((post) => (
+              <Link key={post.slug} href={`blog/${post.slug}`}>
+                <a>
+                  <PostListItem
+                    title={post.title}
+                    date={formatDate(post.date)}
+                    tags={post.tags}
+                  />
+                </a>
+              </Link>
+            ))}
+          </Box>
+        </Flex>
+      </Container>
     </Layout>
 
   )
