@@ -9,7 +9,7 @@ export default function Logo(props) {
                 as="span"
                 fontSize="sm"
                 fontWeight="bold"
-            >Kenri</Text>
+            >✨Kenri</Text>
         </Box>
     );
 }

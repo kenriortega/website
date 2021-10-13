@@ -93,7 +93,7 @@ const MenuLinks = ({ isOpen, }) => {
                 <MenuItem to="/"
                     className="link-name"
                     textStyle="linkName"
-                > 🏠 About me
+                > 😏 About me
                 </MenuItem>
             </Stack>
         </Box >
