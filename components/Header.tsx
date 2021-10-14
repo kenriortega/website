@@ -95,12 +95,12 @@ const MenuLinks = ({ isOpen,  colorMode, toggleColorMode}) => {
                 <MenuItem to="/"
                     className="link-name"
                     textStyle="linkName"
-                > 🏠 Home
+                > 🏠 Inicio
                 </MenuItem>
-                <MenuItem to="/owner/sobre-mi"
+                <MenuItem to="/owner/about"
                     className="link-name"
                     textStyle="linkName"
-                > 😏 About me
+                > 😏 Sobre mi
                 </MenuItem>
                 <IconButton
                     mr="4"
