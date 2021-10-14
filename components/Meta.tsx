@@ -3,9 +3,9 @@ import Head from 'next/head'
 
 
 const Meta = ({
-    title = "Polls APP",
-    description = "Make a poll",
-    keywords = "polls, programing, next.js" }) => {
+    title = "Kenri Blog",
+    description = "My custom blog",
+    keywords = "blog, programing" }) => {
     return (
         <Head>
             <meta name="viewport" content="width=device-width, initial-scale=1" />
