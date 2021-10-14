@@ -6,7 +6,7 @@ import React from 'react'
 import Layout from '../components/Layout'
 import Meta from "../components/Meta"
 import { PostListItem, } from '../components/PostListItem'
-import { getAllFilesMetadata } from '../lib/mdx'
+import { getAllFilesFrontMatter } from '../lib/mdx'
 import { useStylesApp } from '../hooks/useStylesApp'
 import { formatDate } from "../lib/format-date";
 export default function Home({ posts }) {
@@ -58,7 +58,7 @@ export default function Home({ posts }) {
 }
 
 export async function getStaticProps() {
-  const posts = await getAllFilesMetadata()
+  const posts = await getAllFilesFrontMatter('posts')
   return {
     props: {
       posts

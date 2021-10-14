@@ -90,7 +90,7 @@ const MenuLinks = ({ isOpen, }) => {
                     textStyle="linkName"
                 > 🏠 Home
                 </MenuItem>
-                <MenuItem to="/"
+                <MenuItem to="/owner/sobre-mi"
                     className="link-name"
                     textStyle="linkName"
                 > 😏 About me

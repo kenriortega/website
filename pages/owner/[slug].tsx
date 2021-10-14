@@ -2,11 +2,11 @@ import { Box, Container, Flex, Heading, } from "../../components/elements"
 import { getFiles, getFileBySlug } from "../../lib/mdx"
 import { MDXComponents } from "../../components/MDXComponents"
 import { MDXRemote } from 'next-mdx-remote'
-import { PostMetadata } from "../../components/PostMetada"
 import Layout from '../../components/Layout'
 import Meta from "../../components/Meta"
-import React from "react"
-export default function Post({ source, frontmatter }) {
+
+
+export default function Page({ source, frontmatter }) {
     const width = "100%";
     return (
         <Layout>
@@ -29,37 +29,36 @@ export default function Post({ source, frontmatter }) {
                         <Heading as="h1" m={8} size="2xl">
                             {frontmatter.title}
                         </Heading>
-                        <PostMetadata metadata={frontmatter} />
                         <MDXRemote {...source} components={MDXComponents} />
                     </Box>
                 </Flex>
             </Container>
         </Layout >
     )
-}
-
-
-export async function getStaticProps({ params }) {
-    const { source, frontmatter } = await getFileBySlug("posts", params.slug);
-
-    return {
-        props: {
-            source,
-            frontmatter
-        }
-    }
+  
 }
 
 export async function getStaticPaths() {
-    const posts = await getFiles("posts");
-    const paths = posts.map((post) => ({
-      params: {
-        slug: post.replace(/\.mdx/, ""),
-      },
-    }));
-  
-    return {
-      paths,
-      fallback: false,
-    };
-  }
+  const pages = await getFiles("pages");
+  const paths = pages.map((page) => ({
+    params: {
+      slug: page.replace(/\.mdx/, ""),
+    },
+  }));
+
+  return {
+    paths,
+    fallback: false,
+  };
+}
+
+export async function getStaticProps({ params }) {
+  const { source, frontmatter } = await getFileBySlug("pages", params.slug);
+
+  return {
+    props: {
+      source,
+      frontmatter,
+    },
+  };
+}
