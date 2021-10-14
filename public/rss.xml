@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?><rss xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:atom="http://www.w3.org/2005/Atom" version="2.0">
+    <channel>
+        <title><![CDATA[KenriDev - Blog]]></title>
+        <description><![CDATA[Tutoriales y tips de Programación con go,nodejs, redis, kafka y más]]></description>
+        <link>https://kenridev.vercel.app</link>
+        <generator>RSS for Node</generator>
+        <lastBuildDate>Thu, 14 Oct 2021 18:25:59 GMT</lastBuildDate>
+        <atom:link href="https://kenridev.vercel.app/rss.xml" rel="self" type="application/rss+xml"/>
+        <copyright><![CDATA[2021-function getFullYear() { [native code] } Kenriortega]]></copyright>
+        <language><![CDATA[es]]></language>
+        <webMaster><![CDATA[Kenriortega]]></webMaster>
+        <item>
+            <title><![CDATA[Otro blog para la comunidad hispana]]></title>
+            <link>https://kenridev.vercel.app/blog/first-post</link>
+            <guid isPermaLink="true">https://kenridev.vercel.app/blog/first-post</guid>
+            <category><![CDATA[💻 Development]]></category>
+            <category><![CDATA[Personal]]></category>
+            <pubDate>Tue, 12 Oct 2021 00:00:00 GMT</pubDate>
+        </item>
+    </channel>
+</rss>

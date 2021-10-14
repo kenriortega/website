@@ -6,7 +6,9 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "generate:rss": "node ./scripts/generate-rss.js",
+    "prebuild": "npm run generate:rss"
   },
   "dependencies": {
     "@chakra-ui/icons": "^1.0.12",
@@ -27,7 +29,8 @@
     "reading-time": "^1.5.0",
     "rehype": "^11.0.0",
     "remark-code-titles": "^0.1.2",
-    "remark-parse": "^8.0.3"
+    "remark-parse": "^8.0.3",
+    "rss": "^1.2.2"
   },
   "devDependencies": {
     "@types/react": "17.0.11",
