@@ -19,7 +19,6 @@ export default function Post({ source, frontmatter }) {
                 >
                     <Box
                         as="article"
-                        bg="white"
                         p={[4, 4, 8, 16]}
                         mx={[0, 0, 0, 0, 4]}
                         my={4}

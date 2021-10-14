@@ -14,7 +14,7 @@ const theme = extendTheme({
         }),
     },
     config: {
-        initialColorMode: "light",
+        initialColorMode: "dark",
         useSystemColorMode: false,
     },
     colors: {
@@ -22,9 +22,9 @@ const theme = extendTheme({
             700: "#282828"
         },
         brand: {
-            900: "#DD6B20",
-            500: "#ED8936",
-            100: "#FEEBC8",
+            900: "#1da1f2",
+            500: "#92d5ff",
+            100: "rgb(210, 237, 255)",
         },
         secondary: {
             900: "#202225",

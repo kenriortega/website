@@ -4,18 +4,21 @@ import {
     Flex,
     Text,
     Stack,
+    useColorModeValue,
+    useColorMode,
+    IconButton,
 } from "@chakra-ui/react";
 import Link from 'next/link'
 import Logo from "./Logo";
 import { useStylesApp } from "../hooks/useStylesApp";
 import { useRouter } from 'next/router'
-
+import { FaSun, FaMoon, FaBars } from 'react-icons/fa'
 
 const NavBar = (props) => {
     const [isOpen, setIsOpen] = React.useState(false);
     const toggle = () => setIsOpen(!isOpen);
     const { border } = useStylesApp()
-
+    const { colorMode, toggleColorMode } = useColorMode()
     const router = useRouter()
 
 
@@ -26,7 +29,11 @@ const NavBar = (props) => {
             />
 
             <MenuToggle toggle={toggle} isOpen={isOpen} colorFill={border} />
-            <MenuLinks isOpen={isOpen} />
+            
+            <MenuLinks isOpen={isOpen} 
+                            colorMode={colorMode}
+                            toggleColorMode={toggleColorMode}
+            />
         </NavBarContainer>
     );
 };
@@ -71,7 +78,7 @@ const MenuItem = ({ children, isLast = false, to = "/", ...rest }) => {
     );
 };
 
-const MenuLinks = ({ isOpen, }) => {
+const MenuLinks = ({ isOpen,  colorMode, toggleColorMode}) => {
 
     return (
         <Box
@@ -95,6 +102,15 @@ const MenuLinks = ({ isOpen, }) => {
                     textStyle="linkName"
                 > 😏 About me
                 </MenuItem>
+                <IconButton
+                    mr="4"
+                    className="icon-button-name"
+                    size="sm"
+                    icon={colorMode === 'light' ? <FaSun /> : <FaMoon />}
+                    isRound={true}
+                    onClick={toggleColorMode}
+                    alignSelf="flex-end"
+                />
             </Stack>
         </Box >
     );
