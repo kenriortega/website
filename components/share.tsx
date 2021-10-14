@@ -1,4 +1,6 @@
-import styles from '../styles/Share.module.css'
+import { IconTwitter } from "./icons";
+
+import { CustomLink } from './CustomLink';
 import { Flex, Text } from "./elements";
 
 export default function Share({ title }) {
@@ -20,18 +22,15 @@ export default function Share({ title }) {
 
     return (
         <Flex fontSize={["xs", "sm"]} align="center" my={2} color="grayblue.500">
+            <IconTwitter />
+            <Text ml={2}>
+                <CustomLink
+                    href={url}
+                >
+                    ¡Compártelo!
+                </CustomLink>
+            </Text>
 
-        <div className={styles.share}>
-            <a
-                target='_blank'
-                rel='nofollow noopener noreferrer'
-                href={url}
-                title='Comparte este enlace en Twitter'
-            >
-                ¡Compártelo!
-        <TwitterLogo />
-            </a>
-        </div>
         </Flex>
     )
 }
