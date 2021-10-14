@@ -1,10 +1,10 @@
 import styles from '../styles/Share.module.css'
+import { Flex, Text } from "./elements";
 
-export default function Share() {
+export default function Share({ title }) {
     const params = new URLSearchParams({
         url: 'https://covid-resume-cuba.vercel.app',
-        text:
-            '¡Sigue el resumen del estado del covid en cuba.\n\n Esta web esta inspirada en covid-vacuna \n\n desarrollada por @midudev\n\n'
+        text: title
     })
 
     const url = `https://twitter.com/share?${params}`
@@ -19,6 +19,8 @@ export default function Share() {
     )
 
     return (
+        <Flex fontSize={["xs", "sm"]} align="center" my={2} color="grayblue.500">
+
         <div className={styles.share}>
             <a
                 target='_blank'
@@ -30,5 +32,6 @@ export default function Share() {
         <TwitterLogo />
             </a>
         </div>
+        </Flex>
     )
 }

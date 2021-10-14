@@ -2,6 +2,7 @@ import { formatDate } from "../lib/format-date";
 import { Flex, Text, Tag } from "./elements";
 import { IconCalendar, IconClock } from "./icons";
 import { OpenPR } from "./OpenPR";
+import Share from './share.tsx'
 
 export const PostMetadata = ({ metadata }) => {
     return (
@@ -33,6 +34,7 @@ export const PostMetadata = ({ metadata }) => {
                 </Flex>
             </Flex>
             <OpenPR slug={metadata.slug} />
+            <Share title={metadata.title}/>
         </Flex>
     );
 };
