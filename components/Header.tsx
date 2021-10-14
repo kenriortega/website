@@ -103,6 +103,7 @@ const MenuLinks = ({ isOpen,  colorMode, toggleColorMode}) => {
                 > 😏 Sobre mi
                 </MenuItem>
                 <IconButton
+                aria-label=""
                     mr="4"
                     className="icon-button-name"
                     size="sm"
