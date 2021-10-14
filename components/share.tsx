@@ -3,10 +3,10 @@ import { IconTwitter } from "./icons";
 import { CustomLink } from './CustomLink';
 import { Flex, Text } from "./elements";
 
-export default function Share({ title }) {
+export default function Share({ slug }) {
     const params = new URLSearchParams({
-        url: 'https://covid-resume-cuba.vercel.app',
-        text: title
+        url: 'https://dev-psi-khaki.vercel.app/blog/',
+        text: slug
     })
 
     const url = `https://twitter.com/share?${params}`
