@@ -5,7 +5,7 @@ import { Flex, Text } from "./elements";
 
 export default function Share({ slug }) {
     const params = new URLSearchParams({
-        url: 'https://dev-psi-khaki.vercel.app/blog/',
+        url: 'https://kenridev.vercel.app/blog/',
         text: slug
     })
 
