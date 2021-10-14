@@ -34,7 +34,7 @@ export const PostMetadata = ({ metadata }) => {
                 </Flex>
             </Flex>
             <OpenPR slug={metadata.slug} />
-            <Share title={metadata.slug}/>
+            <Share slug={metadata.slug}/>
         </Flex>
     );
 };

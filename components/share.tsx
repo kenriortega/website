@@ -4,9 +4,11 @@ import { CustomLink } from './CustomLink';
 import { Flex, Text } from "./elements";
 
 export default function Share({ slug }) {
+    let urlbase="https://kenridev.vercel.app/blog"
     const params = new URLSearchParams({
-        url: 'https://kenridev.vercel.app/blog/',
-        text: slug
+        url: `${urlbase}/${slug}`,
+        text: 
+        '¡No te pierdas este post .\n\n desarrollado por @kenriortega\n\n'
     })
 
     const url = `https://twitter.com/share?${params}`
