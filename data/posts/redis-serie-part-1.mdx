@@ -1,0 +1,214 @@
+---
+title: 'Introdución a Redis parte 1'
+date: '2021-10-15'
+tags:
+  - '💻 Development'
+  - 'Redis'
+---
+
+
+# Introdución a redis
+
+Hace unos meses comencé a estudiar sobre la base de datos **open source** bajo la licencia **BSD** [redis](https://redis.io/). En la actualidad es utilizada como base de datos, cache y brokers de mensajería.
+
+Redis proporciona diferentes estructuras de datos como "***strings, hashes, lists, sets, sorted sets with range queries, bitmaps, hyperloglogs, geospatial indexes, and streams***". Proporciona alta disponibildad a través de ***redis sentinel*** y particiones automáticas a través de ***redis cluster***.
+
+Redis trabaja siguiendo el concepto de ***in-memory dataset*** (almacenamiento en memoria) y en dependencia de nuestro caso de uso es posible configurar la opcion de persistir los datos en intervalos de tiempo en el disco duro.
+
+Otras características:
+
+- Transacciones
+- Pub/sub
+- Lua scriptings
+- Claves con tiempo de vida (**TTL**)
+- Conmutación por error automática (***Automatic failover***)
+
+El objetivo de esta serie de post relacionados con redis es introducir en nuestro día a día esta base de datos tan potente haciendo uso de los lenguajes de programación como [***golang***](https://github.com/golang/go) y [***nodejs***](https://github.com/nodejs/node) como **runtime** de ejecución de ***javascript** desde el lado del servidor.
+
+
+Bien pues comenzamos con esta serie empezando por el proceso de instalación.
+
+
+### Instalación
+
+
+Si deseas una instalación ***100%*** rápida te recomiendo ejecutar el siguiente comando en sistemas operativos tipo Debian/Ubuntu
+
+```bash
+
+sudo apt update
+sudo apt install redis-server
+
+# Via snap
+sudo snap install redis
+```
+
+***En lo personal me gusta instalarlo de forma manual siguiendo este conjunto de  comandos y procedimientos y estos son los que quiero compartirte.***
+
+- Instalación de utilidades y erramientas de configuración
+
+```bash
+
+# Install basic text editors
+sudo apt install vim -y
+
+# Install build tools and utilities
+sudo apt install build-essential tcl tcl-tls redis-tools libssl-dev wget curl make cmake -y
+```
+
+
+
+- Agregar usuario redis y carpetas para sus configuraciones las cuales serán utilizadas durante el proceso de instalación y descarga.
+
+```bash
+
+# add user for redis
+sudo adduser --system --group --no-create-home redis && \
+    chsh -s /bin/bash redis
+
+# create folders for redis
+sudo mkdir -p /data/redis
+sudo chown redis:redis /data/redis
+sudo chmod 770 /data/redis
+sudo mkdir -p /var/log/redis
+sudo mkdir /etc/redis
+sudo touch /var/log/redis/redis.log
+sudo chmod 770 /var/log/redis/
+sudo chmod 640 /var/log/redis/redis.log
+sudo chown redis:redis /var/log/redis
+sudo chown redis:redis /var/log/redis/redis.log
+
+```
+
+- A la fecha de este tutorial vamos a usar la siguiente versión de [redis-download](https://redis.io/download) disponible en su sitio web. Como dato curios si retomamos el proceso de instalación de las herramientas iniciales se instalaron paquetes como `libssl-dev tcl tcl-tls` con el objetivo de compilar nuestro redis con soporte a SSL
+
+
+```bash
+
+#Download redis
+cd /tmp && \
+    wget http://download.redis.io/releases/redis-6.2.6.tar.gz && \
+    tar -xzvf redis-6.2.6.tar.gz && \
+    cd redis-6.2.6 && \
+    BUILD_TLS=yes make install
+
+# Copy redis.conf file to /etc/redis
+cd /tmp/redis-6.2.6 && \
+    cp redis.conf /etc/redis && \
+    chown -R redis:redis /etc/redis && \
+    chmod 640 /etc/redis/redis.conf
+```
+
+### Configuración y ejecución como servicio de linux
+
+
+Accedemos al archivo de configuración mediante la terminal de lineas de comando. Dentro de este archivo de configuración `redis.conf` es donde podremos definir el comportamiento de nuestra instacia de redis en artículos posteriores trabajaremos a fondo con este archivo.
+
+```bash
+sudo vim /etc/redis/redis.conf
+
+. . .
+
+# If you run Redis from upstart or systemd, Redis can interact with your
+# supervision tree. Options:
+#   supervised no      - no supervision interaction
+#   supervised upstart - signal upstart by putting Redis into SIGSTOP mode
+#   supervised systemd - signal systemd by writing READY=1 to $NOTIFY_SOCKET
+#   supervised auto    - detect upstart or systemd method based on
+#                        UPSTART_JOB or NOTIFY_SOCKET environment variables
+# Note: these supervision methods only signal "process is ready."
+#       They do not enable continuous liveness pings back to your supervisor.
+supervised systemd
+
+. . .
+
+```
+
+Crear nuestro archivo redis.service
+
+
+```bash
+
+sudo vim /lib/systemd/system/redis.service
+
+....
+
+
+    1 # example systemd service unit file for redis-server
+    2 #
+    3 # In order to use this as a template for providing a redis service in your
+    4 # environment, _at the very least_ make sure to adapt the redis configuration
+    5 # file you intend to use as needed (make sure to set "supervised systemd"), and
+    6 # to set sane TimeoutStartSec and TimeoutStopSec property values in the unit's
+    7 # "[Service]" section to fit your needs.
+    8 #
+    9 # Some properties, such as User= and Group=, are highly desirable for virtually
+   10 # all deployments of redis, but cannot be provided in a manner that fits all
+   11 # expectable environments. Some of these properties have been commented out in
+   12 # this example service unit file, but you are highly encouraged to set them to
+   13 # fit your needs.
+   14 #
+   15 # Please refer to systemd.unit(5), systemd.service(5), and systemd.exec(5) for
+   16 # more information.
+   17 
+   18 [Unit]
+   19 Description=Redis data structure server
+   20 Documentation=https://redis.io/documentation
+   21 #Before=your_application.service another_example_application.service
+   22 #AssertPathExists=/var/lib/redis
+   23 Wants=network-online.target
+   24 After=network-online.target
+   25 
+   26 [Service]
+   27 ExecStart=/usr/local/bin/redis-server --supervised systemd --daemonize no
+   28 ## Alternatively, have redis-server load a configuration file:
+   29 #ExecStart=/usr/local/bin/redis-server /path/to/your/redis.conf
+   30 LimitNOFILE=10032
+   31 NoNewPrivileges=yes
+   32 #OOMScoreAdjust=-900
+   33 #PrivateTmp=yes
+   34 Type=notify
+   35 TimeoutStartSec=infinity
+   36 TimeoutStopSec=infinity
+   37 UMask=0077
+   38 User=redis
+   39 Group=redis
+   40 #WorkingDirectory=/var/lib/redis
+   41 
+   42 [Install]
+   43 WantedBy=multi-user.target
+
+
+```
+
+Una vez creado nuestro fichero redis.services procesdemos a ejecutar y chequear el estado de nuestro servicio
+
+
+```bash
+
+# start and enable redis service
+sudo systemctl start redis.service -now
+# check status redis service
+sudo systemctl status redis
+```
+
+En fin se que ha sido largo este tutorial pero no podemos dejar de pasar por alto nuestro comando de prueba para comprobar que el servicio se encuentre activo.
+
+```bash
+
+redis-cli
+
+127.0.0.1:6379> ping
+# output
+PONG
+```
+
+Llegado a este punto ya nos encontramos en condiciones para usar nuestra base de datos en futuros proyectos. Por lo que en próximos articúlos estaremos abordando temas como seguridad, clusters y programación usando lenguajes de programación. Espero que te sea de utilidad este contenido y nos vemos en el próximo capítulo.
+
+
+### Recursos
+
+- [Redis](https://redis.io/) sitio oficial
+- [Cómo instalar y proteger Redis en Ubuntu 20.04](https://www.digitalocean.com/community/tutorials/how-to-install-and-secure-redis-on-ubuntu-20-04-es)
+- [ RU330 ](https://github.com/kenriortega/ru330) curso de redis
+- [Ejemplo de redis service usado en este tutorial](https://fossies.org/linux/redis/utils/systemd-redis_server.service)
