@@ -102,6 +102,11 @@ const MenuLinks = ({ isOpen,  colorMode, toggleColorMode}) => {
                     textStyle="linkName"
                 > 😏 Sobre mi
                 </MenuItem>
+                <MenuItem to="/rss.xml"
+                    className="link-name"
+                    textStyle="linkName"
+                > 📡 RSS
+                </MenuItem>
                 <IconButton
                 aria-label=""
                     mr="4"
