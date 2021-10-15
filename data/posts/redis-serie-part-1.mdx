@@ -9,7 +9,7 @@ tags:
 
 # Introdución a redis
 
-Hace unos meses comencé a estudiar sobre la base de datos **open source** bajo la licencia **BSD** [redis](https://redis.io/). En la actualidad es utilizada como base de datos, cache y brokers de mensajería.
+Hace unos meses comencé a estudiar sobre la base de datos **open source** bajo la licencia **BSD** [redis](https://redis.io/). En la actualidad es utilizada como base de datos, caché y brokers de mensajería.
 
 Redis proporciona diferentes estructuras de datos como "***strings, hashes, lists, sets, sorted sets with range queries, bitmaps, hyperloglogs, geospatial indexes, and streams***". Proporciona alta disponibildad a través de ***redis sentinel*** y particiones automáticas a través de ***redis cluster***.
 
@@ -26,7 +26,7 @@ Otras características:
 El objetivo de esta serie de post relacionados con redis es introducir en nuestro día a día esta base de datos tan potente haciendo uso de los lenguajes de programación como [***golang***](https://github.com/golang/go) y [***nodejs***](https://github.com/nodejs/node) como **runtime** de ejecución de ***javascript** desde el lado del servidor.
 
 
-Bien pues comenzamos con esta serie empezando por el proceso de instalación.
+Bien, pues comenzamos con esta serie empezando por el proceso de instalación.
 
 
 ### Instalación
@@ -45,7 +45,7 @@ sudo snap install redis
 
 ***En lo personal me gusta instalarlo de forma manual siguiendo este conjunto de  comandos y procedimientos y estos son los que quiero compartirte.***
 
-- Instalación de utilidades y erramientas de configuración
+- Instalación de utilidades y herramientas de configuración
 
 ```bash
 
@@ -80,7 +80,7 @@ sudo chown redis:redis /var/log/redis/redis.log
 
 ```
 
-- A la fecha de este tutorial vamos a usar la siguiente versión de [redis-download](https://redis.io/download) disponible en su sitio web. Como dato curios si retomamos el proceso de instalación de las herramientas iniciales se instalaron paquetes como `libssl-dev tcl tcl-tls` con el objetivo de compilar nuestro redis con soporte a SSL
+- A la fecha de este tutorial vamos a usar la siguiente versión de [redis-download](https://redis.io/download) disponible en su sitio web. Como dato curioso si retomamos el proceso de instalación de las herramientas iniciales se instalaron paquetes como `libssl-dev tcl tcl-tls` con el objetivo de compilar nuestro redis con soporte a SSL.
 
 
 ```bash
@@ -102,7 +102,7 @@ cd /tmp/redis-6.2.6 && \
 ### Configuración y ejecución como servicio de linux
 
 
-Accedemos al archivo de configuración mediante la terminal de lineas de comando. Dentro de este archivo de configuración `redis.conf` es donde podremos definir el comportamiento de nuestra instacia de redis en artículos posteriores trabajaremos a fondo con este archivo.
+Accedemos al archivo de configuración mediante la terminal de líneas de comando. Dentro de este archivo de configuración `redis.conf` es donde podremos definir el comportamiento de nuestra instacia de redis, en artículos posteriores trabajaremos a fondo con este archivo.
 
 ```bash
 sudo vim /etc/redis/redis.conf
@@ -181,7 +181,7 @@ sudo vim /lib/systemd/system/redis.service
 
 ```
 
-Una vez creado nuestro fichero redis.services procesdemos a ejecutar y chequear el estado de nuestro servicio
+Una vez creado nuestro fichero redis.services procedemos a ejecutar y chequear el estado de nuestro servicio
 
 
 ```bash
@@ -192,7 +192,7 @@ sudo systemctl start redis.service -now
 sudo systemctl status redis
 ```
 
-En fin se que ha sido largo este tutorial pero no podemos dejar de pasar por alto nuestro comando de prueba para comprobar que el servicio se encuentre activo.
+En fin, sé que ha sido largo este tutorial pero no podemos dejar de pasar por alto nuestro comando de prueba para comprobar que el servicio se encuentre activo.
 
 ```bash
 
@@ -203,7 +203,7 @@ redis-cli
 PONG
 ```
 
-Llegado a este punto ya nos encontramos en condiciones para usar nuestra base de datos en futuros proyectos. Por lo que en próximos articúlos estaremos abordando temas como seguridad, clusters y desarrollo de aplicaciones. Espero que te sea de utilidad este contenido y nos vemos en el próximo capítulo.
+Llegado a este punto ya nos encontramos en condiciones para usar nuestra base de datos en futuros proyectos. Por lo que en próximos artículos estaremos abordando temas como seguridad, clusters y desarrollo de aplicaciones. Espero que te sea de utilidad este contenido y nos vemos en el próximo capítulo.
 
 
 ### Recursos
