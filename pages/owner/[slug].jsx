@@ -4,6 +4,7 @@ import { MDXComponents } from "../../components/MDXComponents"
 import { MDXRemote } from 'next-mdx-remote'
 import Layout from '../../components/Layout'
 import Meta from "../../components/Meta"
+import Link from 'next/link'
 
 
 export default function Page({ source, frontmatter }) {
@@ -17,6 +18,7 @@ export default function Page({ source, frontmatter }) {
                     direction={["column", "column", "column", "column", "row"]}
                     mx="auto"
                 >
+                  <Link href="/">&#8592;Atras</Link>
                     <Box
                         as="article"
                         p={[4, 4, 8, 16]}

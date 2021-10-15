@@ -6,6 +6,7 @@ import { PostMetadata } from "../../components/PostMetada"
 import Layout from '../../components/Layout'
 import Meta from "../../components/Meta"
 import React from "react"
+import Link from 'next/link'
 export default function Post({ source, frontmatter }) {
     const width = "100%";
     return (
@@ -17,6 +18,7 @@ export default function Post({ source, frontmatter }) {
                     direction={["column", "column", "column", "column", "row"]}
                     mx="auto"
                 >
+                    <Link href="/">&#8592;Atras</Link>
                     <Box
                         as="article"
                         p={[4, 4, 8, 16]}
