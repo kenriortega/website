@@ -23,7 +23,7 @@
     "**/*.ts",
     "**/*.tsx",
     "lib/order-by-date.js"
-  ],
+, "pages/index.jsx", "pages/index.jsx", "pages/index.jsx"  ],
   "exclude": [
     "node_modules"
   ]
