@@ -1,0 +1,144 @@
+---
+title: 'Introdución a Redis parte 2'
+date: '2021-10-18'
+tags:
+  - '💻 Development'
+  - 'Redis'
+  - 'Security'
+---
+
+
+En el artículo anterior [Introdución a Redis parte 1](https://kenridev.vercel.app/blog/redis-serie-part-1) mostramos como instalar redis. Hoy trabajaremos con la configuración de Redis. Esta configuración se encuentra en el archivo `/etc/redis.conf` y está dividido en diferentes secciones. Los parámetros de configuración más importantes corresponden a los siguientes:
+
+#### INCLUDES
+
+Permite incluir uno o más archivos adicionales de configuración. Ejemplo:
+
+```bash
+include /path/to/local.conf
+include /path/to/other.conf
+```
+
+#### MODULES
+
+Permite cargar módulos al inicio de la aplicación. Ejemplo:
+
+```bash
+loadmodule /path/to/my_module.so
+loadmodule /path/to/other_module.so
+```
+
+#### NETWORK
+
+Permite configurar las directivas de red de la aplicación, tales como las interfaces por las que debe escuchar conexiones. Si no se especifica ninguna, la aplicación escucha por todas las interfaces de red disponibles en el servidor. Por defecto el modo protección se encuentra habilitado, escuchando solo por la interfaz de red local **127.0.0.1**. Para permitir conexiones desde otros servidores se deben especificar en esta sección. El puerto por defecto de la aplicación es **6379**. Ejemplo:
+
+```bash
+bind 192.168.1.100 10.0.0.1
+# bind 127.0.0.1 ::1
+protected-mode yes
+port 6379
+```
+
+#### GENERAL
+
+Se puede especificar el archivo donde va a estar registrado el id del proceso de la máquina.
+
+```bash
+pidfile /var/run/redis_6379.pid
+```
+
+Se puede especificar el nombre del archivo log del servicio.
+
+```bash
+logfile /var/log/redis/redis.log
+```
+
+Se puede especificar la cantidad de base de datos que el servicio va a emplear.
+
+```bash
+databases 16
+```
+
+#### SNAPSHOTTING
+
+Permite guardar cambios en la base de datos después del tiempo especificado. Ejemplo:
+
+Guarda si:
+
+- Después de 900 segundos si al menos hay un cambio
+- Después de 300 segundos si al menos hay 10 cambios
+- Después de 60 segundos si al menos hay 10000 cambios.
+
+```bash
+# save <seconds> <changes>
+save 900 1
+save 300 10
+save 60 10000
+```
+
+Se puede especificar el nombre de archivo de la base de datos y el sitio donde estará ubicado.
+
+```bash
+# dbfilename dump.rdb
+dir /var/lib/redis
+```
+
+#### SECURITY
+
+Redis permite configurar un `password` de autenticación para la conexión de los clientes al servidor redis. Es importante que defina para su contraseña un valor seguro y largo. Se puede usar el comando `openssl` para generar una de forma aleatoria.
+
+```bash
+
+# create password
+openssl rand 60 | openssl base64 -A
+
+# Output
+RBOJ9cCNoGCKhlEBwQLHri1g+atWgn4Xn4HwNUbtzoVxAYxkiYBi7aufl4MILv1nxBqR4L6NNzI0X6cE
+
+requirepass RBOJ9cCNoGCKhlEBwQLHri1g+atWgn4Xn4HwNUbtzoVxAYxkiYBi7aufl4MILv1nxBqR4L6NNzI0X6cE
+```
+
+Redis permite configurar el nombre de los comandos, en especial de los más vulnerables. Con esto se podría renombrar a algo que sea difícil de adivinar.
+
+Algunos de los comandos considerados peligrosos: **`FLUSHDB, FLUSHALL, KEYS, PEXPIRE, DEL, CONFIG, SHUTDOWN, BGREWRITEAOF, BGSAVE, SAVE, SPOP, SREM, RENAME, y DEBUG`**. No es una lista completa, pero renombrar o desactivar todos los comandos de esa lista es un buen comienzo para mejorar la seguridad de su servidor Redis.
+
+```bash
+ rename-command CONFIG b840fc02d524045429941cc15
+
+. . .
+# It is also possible to completely kill a command by renaming it into
+# an empty string:
+#
+rename-command FLUSHDB ""
+rename-command FLUSHALL ""
+rename-command DEBUG ""
+. . .
+
+. . .
+# rename-command CONFIG ""
+rename-command SHUTDOWN SHUTDOWN_MENOT
+rename-command CONFIG ASC12_CONFIG
+. . .
+```
+
+#### clientes
+
+Redis permite configurar el máximo número de clientes conectados al mismo tiempo. Por defecto, el número máximo es 10.000 clientes
+
+```bash
+maxclients 10000
+```
+
+#### Conclusión
+
+A través de este tutorial, pudimos configurar Redis, validamos el funcionamiento correcto de su instalación y utilizamos sus características de seguridad para hacerlo menos vulnerable a ataques de individuos malintencionados.
+
+Llegado a este punto ya nos encontramos en condiciones para usar nuestra base de datos en futuros proyectos. Por lo que en próximos artículos estaremos abordando temas como `desarrollo de aplicaciones`. Espero que te sea de utilidad este contenido y nos vemos en el próximo capítulo.
+
+
+#### Recursos
+
+- [Redis](https://redis.io/) sitio oficial
+- [Cómo instalar y proteger Redis en Ubuntu 20.04](https://www.digitalocean.com/community/tutorials/how-to-install-and-secure-redis-on-ubuntu-20-04-es) tutorial de digitalocean
+- [RU330](https://github.com/kenriortega/ru330) curso de redis
+- [Redis - config](https://redis.io/topics/config) configuración de redis
