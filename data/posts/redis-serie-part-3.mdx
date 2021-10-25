@@ -9,18 +9,18 @@ tags:
 ---
 
 
-En el artículo anterior [Introdución a Redis parte 2](https://kenridev.vercel.app/blog/redis-serie-part-2) mostramos como aplicar medidas de seguridad a nuestra base de datos redis. Hoy trabajaremos con las [ACL](https://redis.io/topics/acl) Redis. Esta configuración puede ser ejecutada a través de la liena de comandos del `redis-cli` o a través del archivo de configuración `redis/acl.conf`
+En el artículo anterior [Introdución a Redis parte 2](https://kenridev.vercel.app/blog/redis-serie-part-2) mostramos como aplicar medidas de seguridad a nuestra base de datos redis. Hoy trabajaremos con las [ACL](https://redis.io/topics/acl) Redis. Esta configuración puede ser ejecutada a través de la línea de comandos del `redis-cli` o a través del archivo de configuración `redis/acl.conf`
 
 
-## Introdución
+## Introducción
 
-A partir de la versión 6 de redis se encuentra disponibles las características y funcionalidades para hacer uso de las ACL o listas de control de acceso aquí te comparto algunos de sus beneficios.
+A partir de la versión 6 de redis se encuentran disponibles las características y funcionalidades para hacer uso de las ACL o listas de control de acceso, aquí te comparto algunos de sus beneficios.
 
 - Restrición de ***commands*** y ***keys***
 - Permite mitigar daños si un usuario y contraseña ha sido comprometido
 - Reduce el impacto ante errores
 
-Generalmente en nuestro día a día solemos trabajar con redis sin hacer uso de las listas de control de acceso ya que accedemos a nuestra base de datos con el usuario **default** y en ocaciones con un **password** como vimos en el artículo anterior. El día de hoy ampliaremos nuestros recusos en función de nuestro futuro proyecto y debemos sentar las bases para que este escale eficientemente.
+Generalmente en nuestro día a día solemos trabajar con redis sin hacer uso de las listas de control de acceso ya que accedemos a nuestra base de datos con el usuario **default** y en ocasiones con un **password** como vimos en el artículo anterior. El día de hoy ampliaremos nuestros recusos en función de nuestro futuro proyecto y debemos sentar las bases para que este escale eficientemente.
 
 Supongamos que tenemos tres posibles casos de usos para generar nuestras ACL.
 
@@ -31,7 +31,7 @@ Supongamos que tenemos tres posibles casos de usos para generar nuestras ACL.
 
 ![Redis pub/sub](/redis/redis-roles.png)
 
-Cuando trabajamos con las ACL una medida de seguridad que se recomienda es desabilitar el usario de redis por defecto.
+Cuando trabajamos con las ACL una medida de seguridad que se recomienda es deshabilitar el usario de redis por defecto.
 
 ```bash
 acl setuser default off
@@ -39,7 +39,7 @@ acl setuser default off
 
 ### Creando nuestras primeras acl
 
-Crearemos una acl para nuestro usuario con rol desarrollador. Tener claro que no tendra permisos administrativos ya que no los requiere. Los permisos que tendremos en cuenta para este caso de uso especificado serán:
+Crearemos una acl para nuestro usuario con rol desarrollador. Hay que tener claro que no tendrá permisos administrativos ya que no los requiere. Los permisos que tendremos en cuenta para este caso de uso especificado serán:
 
 - crear y leer cualquier tipo de *keys*
 - leer y escribir los accesos y testear sus aplicaciones con redis.
