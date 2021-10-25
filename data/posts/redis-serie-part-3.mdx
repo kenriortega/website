@@ -1,0 +1,96 @@
+---
+title: 'Introdución a Redis parte 3'
+date: '2021-10-25'
+tags:
+  - '💻 Development'
+  - 'Redis'
+  - 'Security'
+  - 'ACL'
+---
+
+
+En el artículo anterior [Introdución a Redis parte 2](https://kenridev.vercel.app/blog/redis-serie-part-2) mostramos como aplicar medidas de seguridad a nuestra base de datos redis. Hoy trabajaremos con las [ACL](https://redis.io/topics/acl) Redis. Esta configuración puede ser ejecutada a través de la liena de comandos del `redis-cli` o a través del archivo de configuración `redis/acl.conf`
+
+
+## Introdución
+
+A partir de la versión 6 de redis se encuentra disponibles las características y funcionalidades para hacer uso de las ACL o listas de control de acceso aquí te comparto algunos de sus beneficios.
+
+- Restrición de ***commands*** y ***keys***
+- Permite mitigar daños si un usuario y contraseña ha sido comprometido
+- Reduce el impacto ante errores
+
+Generalmente en nuestro día a día solemos trabajar con redis sin hacer uso de las listas de control de acceso ya que accedemos a nuestra base de datos con el usuario **default** y en ocaciones con un **password** como vimos en el artículo anterior. El día de hoy ampliaremos nuestros recusos en función de nuestro futuro proyecto y debemos sentar las bases para que este escale eficientemente.
+
+Supongamos que tenemos tres posibles casos de usos para generar nuestras ACL.
+
+- Usuario **kdev** *desarrollador*
+- Usuario **kadmin** *administrador*
+- Usuario **kworker** *worker service*
+- Usuario **default** nativo de la base de datos redis.
+
+![Redis pub/sub](/redis/redis-roles.png)
+
+Cuando trabajamos con las ACL una medida de seguridad que se recomienda es desabilitar el usario de redis por defecto.
+
+```bash
+acl setuser default off
+```
+
+### Creando nuestras primeras acl
+
+Crearemos una acl para nuestro usuario con rol desarrollador. Tener claro que no tendra permisos administrativos ya que no los requiere. Los permisos que tendremos en cuenta para este caso de uso especificado serán:
+
+- crear y leer cualquier tipo de *keys*
+- leer y escribir los accesos y testear sus aplicaciones con redis.
+
+```bash
+acl setuser kdev on >password allcommands -@dangerous +alc|whoaimi allkeys
+```
+
+Procedamos a crear la acl para nuestro usuario con rol Administrador. Los permisos que tendremos en cuenta para este caso de uso serán:
+
+- Administrar redis
+- Configurar usuarios
+- Asistencia ante errores
+
+```bash
+acl setuser kadmin on >passwordadmin +@admin
+```
+
+Para nuestro usuario con rol *worker*. Los permisos que tendremos en cuenta para este caso de uso serán:
+
+- SET *keys*
+- GET *keys*
+
+```bash
+acl setuser worker on >passwordworker +set +get ~notifications:*
+```
+Como se puede observar en esta última acl además de restringir los commandos que podrá ejecutar este usuario definimos el ámbito de alcanse que tendrá para la lectura de las *keys* que manejará nuesta aplicación. He aquí una imagen para ilustrar el caso de uso enfocado a un servicio de notificaciones a través de `pub/sub`.
+
+![Redis pub/sub](/redis/redis-pubsub.png)
+
+#### Trabajando con el `acl.conf`
+
+```toml
+
+vim acl.conf
+
+....
+#acl user default off
+#acl user kenriortega on #atWgn4Xn4HwNUbtzoVxAYxkiYBi7aufl4MILv1nxBqR4L6NNzI0X6cE allcommands -@dangerous +alc|whoaimi allkeys
+#acl user kadmin on #atWgn4Xn4HwNUbtzoVxAYxkiYBi7aufl4MILv1nxBqR4L6NNzI0X6cE +@admin
+#acl user worker on #atWgn4Xn4HwNUbtzoVxAYxkiYBi7aufl4MILv1nxBqR4L6NNzI0X6cE +set +get ~notifications:allkeys
+```
+
+#### Conclusión
+
+A través de este tutorial, pudimos configurar nuestras ACL en Redis. Pudimos extrapolar diferentes casos de usos los cuales en futuros artículos jugarán un papel importante en la construcción de nuestra aplicación.
+
+Llegado a este punto ya nos encontramos en condiciones para usar nuestra base de datos en futuros proyectos. Por lo que en próximos artículos estaremos abordando temas como `desarrollo de aplicaciones`. Espero que te sea de utilidad este contenido y nos vemos en el próximo capítulo.
+
+
+#### Recursos
+
+- [Redis](https://redis.io/) sitio oficial
+- [ACL](https://redis.io/topics/acl) Acl documentación
