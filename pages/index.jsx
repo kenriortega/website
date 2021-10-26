@@ -58,7 +58,7 @@ export default function Home({ posts }) {
 
         </Heading>
         <Text m={8} size="md">
-          Estará enfocado el blog a compartir pruebas de conceptos basadas en los siguientes temas golang y nodejs. El uso de estos con sistemas de bases de datos como redis, postgresql y brokers de mensajerias como apache kafka. Otras tecnologías que me resultan interesantes como es el Rusty tecnologías emergentes dentro de la web3.0
+          Estará enfocado el blog a compartir pruebas de conceptos basadas en los siguientes temas golang y nodejs. El uso de estos con sistemas de bases de datos como redis, postgresql y brokers de mensajerias como apache kafka. Otras tecnologías que me resultan interesantes como es el lenguaje Rust y tecnologías emergentes dentro de la web3.0
         </Text>
         <ScrollToTop />
         <Flex
