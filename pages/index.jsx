@@ -2,6 +2,7 @@
 
 import { Box, Container, Flex, Heading,Text } from "../components/elements"
 import { formatDate } from "../lib/format-date";
+import { orderByDate } from "../lib/order-by-date";
 import { getAllFilesFrontMatter } from '../lib/mdx'
 import { PostListItem, } from '../components/PostListItem'
 import { ScrollToTop, } from '../components/ScrollToTop'
@@ -103,7 +104,8 @@ export default function Home({ posts }) {
 }
 
 export async function getStaticProps() {
-  const posts = await getAllFilesFrontMatter('posts')
+  const unorderedPosts = await getAllFilesFrontMatter('posts')
+  const posts = unorderedPosts.sort(orderByDate);
   return {
     props: {
       posts
