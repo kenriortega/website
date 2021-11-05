@@ -1,5 +1,5 @@
 ---
-title: 'Mejorando los tiempo de respuesta de nuestras API con Redis y Go'
+title: 'Mejorando los tiempo de respuestas de nuestras API con Redis y Go'
 date: '2021-11-04'
 tags:
   - '💻 Development'
@@ -11,15 +11,15 @@ tags:
 
 En este artículo continuaremos haciendo uso de nuestra base de datos [Redis](https://redis.io/), pero a través del lenguaje de programción [golang](https://golang.org/). Durante estos próximos artículos estaremos explorando las bondades que nos ofrece esta base de datos.
 
-Uno de los casos de usos mas frecuentes que solemos afrontar en nuestra activadad de desarrollo es como mejorar los tiempos de respuestas de nuestros servicios (***api*** ***servers*** o aplicaciones ***CLI***).
+Uno de los casos de usos más frecuentes que solemos afrontar en nuestra activadad de desarrollo es, cómo mejorar los tiempos de respuestas de nuestros servicios (***api*** ***servers*** o aplicaciones ***CLI***).
 
-En el dia de hoy trabajaremos con el recurso [coingecko](https://www.coingecko.com/es/api/documentation) esta ***API*** nos permite consultar: listado de las mendas y precios, datos historicos, datos relacionados con los contratos inteligentes entre otras cosas todo esto y más se pueden obeservar en su documentación oficial al final del artículo te compartiré los enlaces. Esta API tiene implememtado `rate limit` 🛑 de  ` 50 calls/minute` y en este tutorial te enseñaré a reducir el tiempo de respuesta al consultar la api y además a ahorrar la mayor cantidad de llamadas al API durante un minuto.
+En el día de hoy trabajaremos con el recurso [coingecko](https://www.coingecko.com/es/api/documentation) esta ***API*** nos permite consultar: listado de las monedas y precios, datos históricos, datos relacionados con los contratos inteligentes entre otras cosas, todo esto y más se puede observar en su documentación oficial, al final del artículo te compartiré los enlaces. Esta API tiene implementado `rate limit` 🛑 de  ` 50 calls/minute` y en este tutorial te enseñaré a reducir el tiempo de respuesta al consultar la API y además a ahorrar la mayor cantidad de llamadas al API durante un minuto.
 
-En este tutorial se asume que tenemos instalada la base de datos redis  y el lenguaje de progrmación [*golang downloads site*](https://golang.org/doc/install)
+En este tutorial se asume que tenemos instalada la base de datos redis  y el lenguaje de progrmación [*golang downloads site*](https://golang.org/doc/install).
 
 ### Configuración inicial de nuestro proyecto
 
-En este caso usaremos redis pero a través de [podman](https://podman.io/). El cual es un motor de contenedores como docker. Más detalles consultar la [documentación oficial](https://podman.io/whatis.html).
+En este caso usaremos redis, pero a través de [podman](https://podman.io/). El cual es un motor de contenedores como docker. Más detalles consultar la [documentación oficial](https://podman.io/whatis.html).
 
 ```bash
 # Download image
@@ -67,7 +67,7 @@ curl -X 'GET' \
   -H 'accept: application/json'
 
 ```
-Este listado es conformado por la siguiente respuesta json.
+Este listado es la respuesta json después de consultar la api.
 ```json
 [
   {
@@ -114,7 +114,7 @@ type ResponseCoins struct {
 }
 ```
 
-Comencemos a consumir nuestra `api` en este caso go, nos provee un exelente `stdlib` con su paquete `net/http`. Con el cual crearemos nuestro método `getCoins` el cual recibe por parametros el `method` y el `endpoint` y retorna una estructura de tipo `ResponseCoin`
+Comencemos a consumir nuestra `api`, en este caso, go nos provee un excelente `stdlib` con su paquete `net/http`. Con el cual crearemos nuestro método `getCoins`, el cual recibe por parámetros el `method` y el `endpoint` y retorna una estructura de tipo `ResponseCoin`
 
 ```go
 // getCoins ...
@@ -147,7 +147,7 @@ func getCoins(method, endpoint string) (responeCoins ResponseCoins, err error) {
 }
 ```
 
-En este punto nuestro archivo `main.go` se encuentra asñi y nuestra función main haciendo una llamada al metodo `getCoins`
+En este punto nuestro archivo `main.go` se encuentra así 👇 y nuestra función main haciendo una llamada al método `getCoins`.
 
 ```go
 // vars & structs
@@ -173,7 +173,7 @@ func main() {
 // methods
 ```
 
-Una vez q ejecutamos nuestro fichero `main.go` a través de la terminal de lineas de comando el resultado arrojado es el siguiente
+Una vez que ejecutamos nuestro fichero `main.go` a través de la terminal de líneas de comando el resultado arrojado es el siguiente:
 
 ```bash
 ❯ go run main.go 
@@ -208,7 +208,7 @@ func GetRedisDbClient(ctx context.Context) *redis.Client {
 
 ```
 
-Con nuestra implementación de nuestro método para la conexión a la base de datos redis procedemos al paso mas importante de este tutorial, y es aplicar la estrategia de *caching* de nuestra respuesta proveniente de la API. Así es como quedaría nuestro método `getCoins` usando nuestra instancia de redis
+Con nuestra implementación del método para la conexión a la base de datos redis procedemos al paso más importante de este tutorial, y es aplicar la estrategia de *caching* de nuestra respuesta proveniente de la API. Así es como quedaría nuestro método `getCoins` usando nuestra instancia de redis.👇
 
 ```go
 // getCoins ...
@@ -247,9 +247,9 @@ func getCoins(
 
 ```
 
-Como podemos observar en el método, se refactorizó la firma de nuestra función para que aceptara por parametros nuesvos campos como nuestra instacia del cliente de redis, el contexto el cual es usado en todos los métodos de la liberia `go-redis`, se agregó además la key por la cual chequearemos la entrada de nuevos registro hacia la base de datos y como valor agregado un parametro `duration` para almacenar nuestra clave con un *TTL*.
+Como podemos 👀 en el método, se refactorizó la firma de nuestra función para que aceptara por parámetros nuevos campos, tales como: nuestra instacia del cliente de redis, el contexto el cual es usado en todos los métodos de la librería `go-redis`, se agregó además la key por la cual chequearemos la entrada de nuevos registros hacia la base de datos y como valor agregado un parámetro `duration` para almacenar nuestra clave con un *TTL*.
 
-Puede que resulte curioso el método `ToJSON` de la variable `responseCoins` este método convierte nuestra estructura a un objeto json dentro de un string. Para que pueda ser insertado en redis como valor de nuestra key ***key:value***. Es valido recalcar que en este tutorial estamos utilizado el tipo de dato más basíco que nos ofrece la base de datos redis que es `String`.
+Puede que resulte curioso el método `ToJSON` de la variable `responseCoins`, este método convierte nuestra estructura a un objeto json dentro de un string para que pueda ser insertado en redis como valor de nuestra key, siguiendo este esquema de ***key:value***. Es válido recalcar que en este tutorial estamos utilizado el tipo de dato más básico que nos ofrece la base de datos redis que es `String`.
 
 ```go
 // ToJSON ...
@@ -262,7 +262,7 @@ func (r *ResponseCoins) ToJSON() string {
 }
 ```
 
-En este punto revisando nuestro método main quedaría con la siguiente estructura
+En este punto 👀 nuestro método main quedaría con la siguiente estructura
 
 ```go
 	...
@@ -282,7 +282,7 @@ En este punto revisando nuestro método main quedaría con la siguiente estructu
     ...
 ```
 
-Si ejecutamos una vez mas nuestro programa de go este sería el resultado:
+Si ejecutamos una vez más nuestro programa de go, este sería el resultado:
 
 ```bash
 REDIS_URI="localhost:6379" REDIS_PASS=password go run main.go
@@ -291,11 +291,11 @@ Fetching all coins from:  https://api.coingecko.com/api/v3/coins/list
 Fetched [10326] coins from source: caché in response time: 18.048576ms
 ```
 
-Y como se puede apreciar tenemos un tiempo de respuesta de unos 18ms. Pues sí ha sido genial en este punto del tutorial observar como mejora el `performance` de nuestra llamada al método `getCoins` a través de nuestra estrategia de caché. Esto impacta de forma positiva en nuestros usuarios y en el uso de nuestras aplicaciones ya que de forma eficiente accedemos mucho mas rápido a nuestra información.
+Y como se puede apreciar, tenemos un tiempo de respuesta de unos 18ms. Pues sí, ha sido genial en este punto del tutorial observar como mejorar el `performance` de nuestra llamada al método `getCoins` a través de nuestra estrategia de caché. Esto impacta de forma positiva en nuestros usuarios y en el uso de nuestras aplicaciones, ya que de forma eficiente accedemos mucho más rápido a nuestra información.
 
 #### Conclusión
 
-A través de este tutorial, pudimos desarrollar una aplicación en el lenguaje de programación go y nuestra base de datos Redis. Definimos una estrategia de Caché para consultar nuestra lista de monedas sin afectar el servicio de tercero que en lo particular nos ofrece un `rate limit` 🛑 de  ` 50 calls/minute`.  En nuestro caso de uso pudimos mejorar el tiempo de respuesta de nuestra aplicación impactando en el `performance` de la misma además de ahorrar nuestras presiadas 49 llamadas restantes a nuestra `API` 😂.
+A través de este tutorial, pudimos desarrollar una aplicación en el lenguaje de programación go y Redis. Definimos una estrategia de Caché para consultar nuestra lista de monedas sin afectar el servicio de tercero, que en lo particular nos ofrece un `rate limit` 🛑 de  ` 50 calls/minute` ⏰.  En nuestro caso de uso, pudimos mejorar el tiempo de respuesta de la aplicación impactando en el `performance` de la misma, además de ahorrar nuestras presiadas 49 llamadas restantes a la `API` 😂.
 
 
 #### Recursos
