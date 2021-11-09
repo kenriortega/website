@@ -33,7 +33,7 @@ podman pull quay.io/bitnami/redis
 podman run --name redis --rm -e ALLOW_EMPTY_PASSWORD=yes -p 6379:6379 quay.io/bitnami/redis:latest
 ```
 
-En el artículo [Mejorando los tiempos de respuesta de nuestras API con Redis y Go](https://kenridev.vercel.app/blog/redis-serie-dev-part-1) inicialisamos un proyecto en github, aquí te dejo las instrucciones por si deseas descargar el código del ejemplo:
+En el artículo [Mejorando los tiempos de respuesta de nuestras API con Redis y Go](https://kenridev.vercel.app/blog/redis-serie-dev-part-1) inicializamos un proyecto en github, aquí te dejo las instrucciones por si deseas descargar el código del ejemplo:
 
 ```bash
 
@@ -120,7 +120,7 @@ Procedemos a ejecutar nuestro servidor a través de la línea de comandos
 > go run main.go --port 4000
 ```
 
-Luego para chequear que este correctamenten ejecutandose el servicio se pueden usar diversos cliente *REST* `curl`, `postman` etc.
+Luego para chequear que esté correctamente ejecutándose el servicio se pueden usar diversos cliente *REST* `curl`, `postman` etc.
 
 Ahora vamos a ir agregando nuestras variables para nuestro `rate limit`
 
@@ -133,11 +133,11 @@ const (
 )
 ...
 ```
-Como se 👀 definimos nuestros limites para las solicitudes por clientes y el limite de duración de nuestra `key` en redis, compuesta por `requests:<IP>`.
+Como se 👀 definimos nuestros límites para las solicitudes por clientes y el límite de duración de nuestra `key` en redis, compuesta por `requests:<IP>`.
 
-Para este caso de uso usaremos el IP como identificador principal para saber quien o que está enviando solicitudes hacia el servidor.
+Para este caso de uso usaremos el IP como identificador principal para saber quién o qué está enviando solicitudes hacia el servidor.
 
-Para ello te comparto este metodo `extractIpAddr` el cual recibe por parámetros el obejto `req *http.Request`.
+Para ello te comparto este método `extractIpAddr` el cual recibe por parámetros el objeto `req *http.Request`.
 
 ```go
 func extractIpAddr(req *http.Request) string {
@@ -184,8 +184,8 @@ func (c *IPController) createKEY(ip string) string {
 }
 
 ```
-La idea para implementar un `rate limit` es emplear los siguientes comando `GET`,`SETEX`, `INCR` que nos provee redis. Seguro conoces `GET` para obtener dado una `key` su valor,
-en el caso de `SETEX` es para agregar un valor a una `key` en caso de que no exista y de lo contrario la modifica el último comando `INCR` es el encargado de incrementar la cantidad de veces q se utiliza esa `key`.
+La idea para implementar un `rate limit` es emplear los siguientes comandos `GET`,`SETEX`, `INCR` que nos provee redis. Seguro conoces `GET` para obtener dado una `key` su valor,
+en el caso de `SETEX` es para agregar un valor a una `key` en caso de que no exista y de lo contrario la modifica, el último comando `INCR` es el encargado de incrementar la cantidad de veces q se utiliza esa `key`.
 
 ```bash
 
@@ -267,7 +267,7 @@ func main() {
 }
 ```
 
-Como se 👀 se hace uso de las funciones `extractIpAddr` para definir el identificador principal y de la función `AcceptedRequest` quien maneja el control de nuestras solicitudes entrantes, retornando en caso positivo  `status 200` y en caso de llegar al limite definido por cantidad de solicitudes o de ⏰ de duracion `status 429` 🛑. Pues ejecutemos de nuevo el servidor y en una terminal aparte con el `redis-cli` ejecutemos un nuevo comando `MONITOR` este ultimo nos ayudara a entender el proceso de nuestro rate limit pero desde la visata de la base de datos.
+Como se 👀 se hace uso de las funciones `extractIpAddr` para definir el identificador principal y de la función `AcceptedRequest` quien maneja el control de nuestras solicitudes entrantes, retornando en caso positivo  `status 200` y en caso de llegar al límite definido por cantidad de solicitudes o de ⏰ de duración `status 429` 🛑. Pues ejecutemos de nuevo el servidor y en una terminal aparte con el `redis-cli` ejecutemos un nuevo comando `MONITOR`, este ultimo nos ayudará a entender el proceso de nuestro rate limit pero desde la vista de la base de datos.
 
 ![requests](/redis/redis-rate-limit.gif)
 
@@ -275,7 +275,7 @@ Como se 👀 se hace uso de las funciones `extractIpAddr` para definir el identi
 #### Conclusión
 
 
-A través de este tutorial, pudimos desarrollar una aplicación en el lenguaje de programación go y Redis. Con la implementación de un `rate limit` en nuesta *API* podemos agregar una capa de seguridad que nos permita elevar las medidas de seguridad ante posibles ataques de usuarios o bot maliciosos. Podimos definir como identificador principal el `IP` de nuestros usuario o posibles atacantes. Ampliamos nuestros concimientos en el uso de nuevos comando de redis como `INCR` y `MONITOR`.
+A través de este tutorial, pudimos desarrollar una aplicación en el lenguaje de programación go y Redis. Con la implementación de un `rate limit` en nuesta *API* pudimos agregar una capa de seguridad que nos permita elevar las medidas de seguridad ante posibles ataques de usuarios o bot maliciosos. Pudimos definir como identificador principal el `IP` de nuestros usuarios o posibles atacantes. Ampliamos nuestros concimientos en el uso de nuevos comandos de redis como `INCR` y `MONITOR`.
 
 
 #### Recursos
