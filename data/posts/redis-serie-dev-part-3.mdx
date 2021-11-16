@@ -10,7 +10,7 @@ tags:
   - 'Golang'
 ---
 
-Para realizar servicios de 🔍 y filtrado que puedan ser utilizados en plataformas de tipo ***e-commerce***, o sitios de 🔍 con propósito general,  se suelen utilizar sistemas de bases de datos relacionales tales como [postgresql](https://www.postgresql.org/) por nombrar una, o motores de búsquedas cómo, [elasticsearch](https://www.elastic.co/) o [apache Solr](https://solr.apache.org/). Existen soluciones emergentes mucho más ligeras, tal es el caso de [meilisearch](https://docs.meilisearch.com/).
+Para realizar servicios de 🔍 y filtrado que puedan ser utilizados en plataformas de tipo ***e-commerce***, o sitios de 🔍 con propósito general,  se suelen utilizar sistemas de bases de datos relacionales tales como [postgresql](https://www.postgresql.org/) por nombrar una, o motores de búsquedas como, [elasticsearch](https://www.elastic.co/) o [apache Solr](https://solr.apache.org/). Existen soluciones emergentes mucho más ligeras, tal es el caso de [meilisearch](https://docs.meilisearch.com/).
 
 Pero hoy estaremos desarrollando un servicio de búsqueda con [rediSearch](https://oss.redis.com/redisearch/) y [golang](https://golang.org/), la idea es, conocer algunas de las caraterísticas de este asombroso módulo de [Redis](https://redis.io/) y salir de la zona de `confort`. Entre las bondades que podemos destacar se encuentran:
 - búsqueda por múltiples campos dentro de una cosnsulta.
@@ -167,7 +167,7 @@ func main() {
 }
 ```
 
-El método `CreateIndexRedisSearch` se encarga de chequear si existe previamente un índice con el mismo nombre, de ser así lo elimina, luego ejecuta el comando `FT.CREATE` creando el índice con el nombre `pizza:index` y define el esquema con los campos que serán utilizados por nuestro servicio web. 
+El método `CreateIndexRedisSearch`, se encarga de chequear si existe previamente un índice con el mismo nombre, de ser así lo elimina, luego ejecuta el comando `FT.CREATE` creando el índice con el nombre `pizza:index` y define el esquema con los campos que serán utilizados por nuestro servicio web. 
 
 > 📌 Las etiquetas `TEXT` permiten realizar búsquedas ***full text search*** en los campos que la requieran, `TAG` nos permite realizar búsqueda por un campo específico, `GEO` nos permite realizar búsquedas 🗺️ geográficas usando el radio y unidades de medida cómo `km|mi`, otra etiqueta de gran utilidad es `NUMERIC`, esta nos permite realizar búsquedas por rango. 👇
 
@@ -417,7 +417,7 @@ func (h *Handler) FindNearPizzas(w http.ResponseWriter, r *http.Request) {
 }
 ```
 
-El tercer *endpoint* `/pizzas/stats`, nos permite realizar una agregación de los restaurantes de pizzas, basada en la fecha que se le indique por parámetro. cuyo objetivo es obtener la cantidad de restaurantes que se habían creado durante ese rango de fecha
+El tercer *endpoint* `/pizzas/stats`, nos permite realizar una agregación de los restaurantes de pizzas, basada en la fecha que se le indique por parámetro, cuyo objetivo es obtener la cantidad de restaurantes que se habían creado durante ese rango de fecha.
 
 ```bash
 curl -X 'GET' \
