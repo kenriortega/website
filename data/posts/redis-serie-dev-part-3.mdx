@@ -10,10 +10,10 @@ tags:
   - 'Golang'
 ---
 
-Para realizar servicios de 🔍 y filtrado que puedan ser utilizados en plataformas de tipo ***e-commerce***, o sitios de 🔍 con proposito general,  se suelen utilizar sistemas de bases de datos relacionales tales cómo [postgresql](https://www.postgresql.org/) por nombrar algunas, o motores de búsquedas cómo, [elasticsearch](https://www.elastic.co/) o [apache Solr](https://solr.apache.org/). Existen soluciones emergentes mucho más ligeras, tal es el caso de [meilisearch](https://docs.meilisearch.com/).
+Para realizar servicios de 🔍 y filtrado que puedan ser utilizados en plataformas de tipo ***e-commerce***, o sitios de 🔍 con propósito general,  se suelen utilizar sistemas de bases de datos relacionales tales como [postgresql](https://www.postgresql.org/) por nombrar una, o motores de búsquedas cómo, [elasticsearch](https://www.elastic.co/) o [apache Solr](https://solr.apache.org/). Existen soluciones emergentes mucho más ligeras, tal es el caso de [meilisearch](https://docs.meilisearch.com/).
 
 Pero hoy estaremos desarrollando un servicio de búsqueda con [rediSearch](https://oss.redis.com/redisearch/) y [golang](https://golang.org/), la idea es, conocer algunas de las caraterísticas de este asombroso módulo de [Redis](https://redis.io/) y salir de la zona de `confort`. Entre las bondades que podemos destacar se encuentran:
-- búsqueda por multiples campos dentro de una cosnsulta.
+- búsqueda por múltiples campos dentro de una cosnsulta.
 - uso de funciones de agregación.
 - búsqueda de texto dentro de los campos especificados.
 
@@ -57,7 +57,7 @@ Nuestro repositorio de ejemplo cuenta con todos los ficheros necesarios para seg
 └── README.md
 ```
 
-cómo se puede 👀 tenemos una carpeta llamada `minisearch`, aquí se encuentra alojado nuestro servicio y será el centro de esta aventura. El caso de uso que estaremos trabajando proviene de [Pizza restaurants and Pizzas on their Menus summary](https://data.world/datafiniti/pizza-restaurants-and-pizzas-on-their-menus/workspace/project-summary?agentid=datafiniti&datasetid=pizza-restaurants-and-pizzas-on-their-menus). Este `📚 dataset` nos provee información relacionada a las características de los restaurantes de pizzas, e información del menú, entre otras variables.
+Como se puede 👀 tenemos una carpeta llamada `minisearch`, aquí se encuentra alojado nuestro servicio y será el centro de esta aventura. El caso de uso que estaremos trabajando proviene de [Pizza restaurants and Pizzas on their Menus summary](https://data.world/datafiniti/pizza-restaurants-and-pizzas-on-their-menus/workspace/project-summary?agentid=datafiniti&datasetid=pizza-restaurants-and-pizzas-on-their-menus). Este `📚 dataset` nos provee información relacionada a las características de los restaurantes de pizzas, e información del menú, entre otras variables.
 
 ### 🧑‍🏫 Explicación del proyecto
 
@@ -69,7 +69,7 @@ El proyecto `minisearch` está compuesto por una pequeña `CLI` que ofrece 3 fun
 
 #### 🚇 Poblar nuestra base de datos
 
-La primera funcionalidad que estaremos explicando tiene cómo nombre *seed*.
+La primera funcionalidad que estaremos explicando tiene como nombre *seed*.
 
 ```go
   ...
@@ -93,8 +93,8 @@ func main() {
 }
 ```
 
-Este `cmd` consiste en leer nuesto fichero de *datasets* `pizzas.csv` e ingestar en redis los datos de interes para nuestro caso de uso. Lo curioso del método `IngestData`
-cómo se puede 👀 en el siguiente fragmento de código es: 👇
+Este `cmd` consiste en leer nuesto fichero de *datasets* `pizzas.csv` e insertar en redis los datos de interés para nuestro caso de uso. Lo curioso del método `IngestData`
+como se puede 👀 en el siguiente fragmento de código es: 👇
 
 ```go
 
@@ -236,7 +236,7 @@ func main() {
 	}
 }
 ```
-Para la 🏗️ de nuestro servicio ***REST*** `API` usaremos una vez más el paquete [`gorrilla/mux`](https://github.com/gorilla/mux). Además de un módulo propio llamado `httpsrv` para encapuslar las funcionalidades básicas de crear un servidor web. Puedes chequerlo en la ruta `pkg/httpsrv/httpsrv.go`, ahí están definido los métodos `NewServer` y `Start`. En vías de agilizar y no hacer tan largo este tutorial nos centraremos en los siguientes *endpoints*:
+Para la 🏗️ de nuestro servicio ***REST*** `API` usaremos una vez más el paquete [`gorrilla/mux`](https://github.com/gorilla/mux). Además de un módulo propio llamado `httpsrv` para encapsular las funcionalidades básicas de crear un servidor web. Puedes chequearlo en la ruta `pkg/httpsrv/httpsrv.go`, ahí están definidos los métodos `NewServer` y `Start`. En vías de agilizar y no hacer tan largo este tutorial nos centraremos en los siguientes *endpoints*:
 
 - `/search`
 - `/pizzas/near`
@@ -276,7 +276,7 @@ Nuestra consulta en redis sería la siguinte
 redis-cli> "FT.SEARCH" "pizza:index" "www.singlepage.com @date_added:[1497830400 1498780800]" "LIMIT" "0" "100"
 ```
 
-cómo se 👀 en la sentencia anterior los valores del campo `date_added` son `NUMERIC` por lo que en nuestro método `Search` se realiza una transformación de dicho campo, además de extrapolar las funcionalidades descritas en la consulta de redis.
+Como se 👀 en la sentencia anterior los valores del campo `date_added` son `NUMERIC` por lo que en nuestro método `Search` se realiza una transformación de dicho campo, además de extrapolar las funcionalidades descritas en la consulta de redis.
 
 ```go
 func (h *Handler) Search(w http.ResponseWriter, r *http.Request) {
@@ -358,7 +358,7 @@ func findQuery(
 	return data, nil
 }
 ```
-> 📌 No todo es color de rosa, en este caso redis retorna cómo resultado un arreglo `[count, key,[key value,...],...]`, y llevarlo al formato de objeto json final fue un reto. Al final del tutorial te dejaré un enlace donde se implementa esa lógica pero con `javascript`. Y sí estrañe `javascript` sobre todo las funciones *map,reduce y filter*  en ese momento 🤪.
+> 📌 No todo es color de rosa, en este caso redis retorna cómo resultado un arreglo `[count, key,[key value,...],...]`, y llevarlo al formato de objeto json final fue un reto. Al final del tutorial te dejaré un enlace donde se implementa esa lógica pero con `javascript`. Y extrañé `javascript` sobre todo las funciones *map,reduce y filter*  en ese momento 🤪.
 
 
 El segundo *endpoint* `/pizzas/near` permite realizar búsquedas  🗺️ *geo referenciadas* sobre el campo `location` previamente definido en el esquema. Con el objetivo de encontrar todos los restaurantes que se encuentren en un radio de 10 km dentro de la longitud y latitud indicada.
@@ -383,7 +383,7 @@ curl -X 'GET' \
   "total_peer_page": 49
 }
 ```
-Nuestra consulta en redis sería la siguinte
+Nuestra consulta en redis sería la siguiente
 
 ```bash
 redis-cli>"FT.SEARCH" "pizza:index" "@location:[-76.566984 39.28663 10 km]" "LIMIT" "0" "100"
@@ -417,7 +417,7 @@ func (h *Handler) FindNearPizzas(w http.ResponseWriter, r *http.Request) {
 }
 ```
 
-El tercer *endpoint* `/pizzas/stats` nos permite realizar una agregación de los restaurantes de pizzas, basada en la fecha que se le indique por parametro. Con el objetivo de obtener la cantidad de restaurantes que se habían creado durante ese rango de fecha
+El tercer *endpoint* `/pizzas/stats` nos permite realizar una agregación de los restaurantes de pizzas, basada en la fecha que se le indique por parámetro. Con el objetivo de obtener la cantidad de restaurantes que se habían creado durante ese rango de fecha
 
 ```bash
 curl -X 'GET' \
@@ -516,7 +516,7 @@ func aggregationQueryBytime(
 
 #### Conclusión
 
-A través de este tutorial, pudimos desarrollar una aplicación en go y redis, donde abordamos conceptos propios de la base de datos, cómo el uso de los *pipeline* y el trabajo con los *HSet* tipo de dato mas avanzado.
+A través de este tutorial, pudimos desarrollar una aplicación en go y redis, donde abordamos conceptos propios de la base de datos, cómo el uso de los *pipeline* y el trabajo con los *HSet* tipo de dato más avanzado.
 
 Pudimos ver en un ejemplo real las bondades del módulo *rediSearch* así cómo sus particularidades en el manejo de los índices y en la definición de los esquemas de los mismos.
 
