@@ -1,0 +1,539 @@
+---
+
+title: 'Implementando un API de 🔍 con RediSearch y Go'
+
+date: '2021-11-16'
+tags:
+  - '💻 Development'
+  - 'Redis'
+  - 'RediSearch'
+  - 'Golang'
+---
+
+Para realizar servicios de 🔍 y filtrado que puedan ser utilizados en plataformas de tipo ***e-commerce***, o sitios de 🔍 con proposito general,  se suelen utilizar sistemas de bases de datos relacionales tales cómo [postgresql](https://www.postgresql.org/) por nombrar algunas, o motores de búsquedas cómo, [elasticsearch](https://www.elastic.co/) o [apache Solr](https://solr.apache.org/). Existen soluciones emergentes mucho más ligeras, tal es el caso de [meilisearch](https://docs.meilisearch.com/).
+
+Pero hoy estaremos desarrollando un servicio de búsqueda con [rediSearch](https://oss.redis.com/redisearch/) y [golang](https://golang.org/), la idea es, conocer algunas de las caraterísticas de este asombroso módulo de [Redis](https://redis.io/) y salir de la zona de `confort`. Entre las bondades que podemos destacar se encuentran:
+- búsqueda por multiples campos dentro de una cosnsulta.
+- uso de funciones de agregación.
+- búsqueda de texto dentro de los campos especificados.
+
+### ⚙️ Configuración inicial de nuestro proyecto
+
+En este caso usaremos *redisSearch* la cual es una imagen de docker configurada con esta funcionalidad.
+
+```bash
+# Download image
+podman pull redislabs/redisearch:latest
+# Run the container for our redis instance
+podman run --name rediSearch --rm -e ALLOW_EMPTY_PASSWORD=yes -p 6379:6379 redislabs/redisearch:latest
+```
+Nuestro repositorio de ejemplo cuenta con todos los ficheros necesarios para seguir este tutorial. Este es el estado actual de las carpetas.
+
+```bash
+├── data
+│   └── pizzas.csv
+├── examples
+│   ├── cacheapp
+│   │   └── main.go
+│   ├── minisearch
+│   │   ├── domain
+│   │   │   ├── pizza.go
+│   │   │   └── pizzasearch.go
+│   │   ├── handlers
+│   │   │   └── handlers.go
+│   │   ├── http.rest
+│   │   └── main.go
+│   └── ratelimit
+│       ├── http.rest
+│       └── main.go
+├── go.mod
+├── go.sum
+├── makefile
+├── pkg
+│   ├── db
+│   │   └── redis.go
+│   └── httpsrv
+│       └── httpsrv.go
+└── README.md
+```
+
+cómo se puede 👀 tenemos una carpeta llamada `minisearch`, aquí se encuentra alojado nuestro servicio y será el centro de esta aventura. El caso de uso que estaremos trabajando proviene de [Pizza restaurants and Pizzas on their Menus summary](https://data.world/datafiniti/pizza-restaurants-and-pizzas-on-their-menus/workspace/project-summary?agentid=datafiniti&datasetid=pizza-restaurants-and-pizzas-on-their-menus). Este `📚 dataset` nos provee información relacionada a las características de los restaurantes de pizzas, e información del menú, entre otras variables.
+
+### 🧑‍🏫 Explicación del proyecto
+
+El proyecto `minisearch` está compuesto por una pequeña `CLI` que ofrece 3 funcionalidades.
+
+- Poblar nuestra base de datos (*seed*)
+- Crear nuestro indice en redis (*create:index*)
+- Exponer un servicio web `API` (*web*)
+
+#### 🚇 Poblar nuestra base de datos
+
+La primera funcionalidad que estaremos explicando tiene cómo nombre *seed*.
+
+```go
+  ...
+func main() {
+
+	ctx := context.Background()
+	rdb := db.GetRedisDbClient(context.Background())
+
+	switch action {
+	case "web":
+	   ...
+	case "seed":
+		start := time.Now()
+		var path, _ = os.Getwd()
+		domain.IngestData(ctx, rdb, path, "data/pizzas.csv")
+		elapsed := time.Since(start)
+		log.Printf("Seed pizza data on redis [%s]\n", elapsed.String())
+	case "create:index":
+		...
+	}
+}
+```
+
+Este `cmd` consiste en leer nuesto fichero de *datasets* `pizzas.csv` e ingestar en redis los datos de interes para nuestro caso de uso. Lo curioso del método `IngestData`
+cómo se puede 👀 en el siguiente fragmento de código es: 👇
+
+```go
+
+func IngestData(
+	ctx context.Context,
+	rdb *redis.Client,
+	path, filename string,
+) {
+	// ✨
+	pipe := rdb.Pipeline()
+
+	csvFile, err := os.Open(fmt.Sprintf("%s/%s", path, filename))
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer csvFile.Close()
+
+	// ✨
+	csvLines, err := csv.NewReader(csvFile).ReadAll()
+	if err != nil {
+		log.Fatal(err)
+	}
+	for index, line := range csvLines[1:] {
+
+		pizzaR := NewPizzaR(line, index)
+
+		key := fmt.Sprintf(`pizza:%s`, pizzaR.ID)
+		value, err := pizzaR.ToMAP()
+		if err != nil {
+			log.Fatal(err)
+		}
+		// ✨
+		pipe.HSet(ctx, key, value)
+	}
+	// ✨
+	_, err = pipe.Exec(ctx)
+	if err != nil {
+		panic(err)
+	}
+	log.Println("Successfully Ingested CSV file on redis")
+}
+
+```
+- El uso del paquete nativo `"encoding/csv"` para nuestra lectura del fichero csv. 
+- Insertar en redis siguiendo el estandar de `key` siguiente `pizza:id`, además se utiliza el comando `Pipeline` el cual permite encadenar e insertar todos los elementos en nuestra base de datos de una forma más eficiente.
+
+> 📌 Dato curioso en el módulo de *rediSearch* es necesario guardar la información con el tipo de dato *hash map* a través del comando `HSet`, el cual recibe por parámetros los valores de tipo de dato `map` de go.
+
+
+#### 👷 Crear nuestro índice en redis
+
+Este `cmd` consiste en crear nuestro índice para un trabajo posterior con el módulo de *rediSearch*.
+
+```go
+
+func main() {
+  ...
+	switch action {
+	case "web":
+	   ...
+	case "seed":
+		start := time.Now()
+		var path, _ = os.Getwd()
+		domain.IngestData(ctx, rdb, path, "data/pizzas.csv")
+		elapsed := time.Since(start)
+		log.Printf("Insert pizza data on redis [%s]\n", elapsed.String())
+	case "create:index":
+		domain.CreateIndexRedisSearch(ctx, rdb)
+	}
+}
+```
+
+El método `CreateIndexRedisSearch` se encarga de chequear si existe previamente un índice con el mismo nombre, de ser así lo elimina, luego ejecuta el comando `FT.CREATE` creando nuestro índice con el nombre `pizza:index` y define el esquema con los campos que serán utilizados por nuestro servicio web. 
+
+> 📌 Las etiquetas `TEXT` permiten realizar búsquedas ***full text search*** en los campos que la requieran, `TAG` nos permite realizar búsqueda por un campo específico, `GEO` nos permite realizar búsquedas 🗺️ geográficas usando el `radius` y unidades de medida cómo `km|mi`, otra etiqueta de gran utilidad es `NUMERIC` esta nos permite realizar búsquedas por rango. 👇
+
+```go
+var (
+	INDEX = "pizza:index"
+)
+
+func CreateIndexRedisSearch(ctx context.Context, rdb *redis.Client) {
+
+	indices, err := rdb.Do(ctx, `FT._LIST`).Result()
+	if err != nil {
+		log.Fatal(err)
+	}
+	for _, index := range indices.([]interface{}) {
+		if index.(string) == INDEX {
+			log.Println("Find index to drop")
+			rdb.Do(ctx, `FT.DROPINDEX`, INDEX)
+			break
+		}
+	}
+	rdb.Do(
+		ctx,
+		`FT.CREATE`, INDEX,
+		"ON", "hash",
+		"PREFIX", 1, "pizza",
+		"SCHEMA",
+		"description", "TEXT",
+		"page_url", "TEXT",
+		"category", "TEXT",
+		"primary_category", "TEXT",
+		"location", "GEO",
+		"date_added", "NUMERIC",
+		"country", "TAG",
+		"currency", "TAG",
+	)
+}
+```
+#### 🕸️ Exponer servicio web `API`
+
+Este `cmd` consiste en ejecutar nuestro servicio web `API`.
+
+```go
+
+func main() {
+  ...
+	switch action {
+	case "web":
+	  r := mux.NewRouter()
+		h := handlers.New(rdb)
+
+		r.HandleFunc("/search", h.Search).Methods(http.MethodGet)
+		r.HandleFunc("/pizzas/near", h.FindNearPizzas).Methods(http.MethodGet)
+		r.HandleFunc("/pizzas/stats", h.StatsByDate).Methods(http.MethodGet)
+
+		srv := httpsrv.NewServer(host, port, r)
+		srv.Start()
+	case "seed":
+		start := time.Now()
+		var path, _ = os.Getwd()
+		domain.IngestData(ctx, rdb, path, "data/pizzas.csv")
+		elapsed := time.Since(start)
+		log.Printf("Seed pizza data on redis [%s]\n", elapsed.String())
+	case "create:index":
+		domain.CreateIndexRedisSearch(ctx, rdb)
+	}
+}
+```
+Para la 🏗️ de nuestro servicio ***REST*** `API` usaremos una vez más el paquete [`gorrilla/mux`](https://github.com/gorilla/mux). Además de un módulo propio llamado `httpsrv` para encapuslar las funcionalidades básicas de crear un servidor web. Puedes chequerlo en la ruta `pkg/httpsrv/httpsrv.go`, ahí están definido los métodos `NewServer` y `Start`. En vías de agilizar y no hacer tan largo este tutorial nos centraremos en los siguientes *endpoints*:
+
+- `/search`
+- `/pizzas/near`
+- `/pizzas/stats`
+
+El primer *endpoint* `/search`, permite realizar búsquedas `full text search` y `range` sobre los campos definidos en el esquema de *rediSearch*. Para este caso realizaremos una búsqueda por el campo `page_url` y por el campo `date_added`. Con el objetivo de obtener todos los restaurantes que tenga ese nombre de dominio en ese rango de fecha.
+
+```bash
+curl -X 'GET' \
+  'http://localhost:8000/search?q=www.singlepage.com&start=2017-06-19&end=2017-06-30' \
+  -H 'accept: application/json'
+
+# result
+{
+  "docs": [
+   {
+      ...
+      "date_added": "1497830400",
+      "page_url": "http://www.singlepage.com/due-fratelli-1",
+      ...
+    },
+    {
+      ...
+      "date_added": "1497830400",
+      "page_url": "http://www.singlepage.com/due-fratelli-1",
+      ...
+    },
+  ],
+  "total": 167,
+  "total_peer_page": 100
+}
+```
+
+Nuestra consulta en redis sería la siguinte
+
+```bash
+redis-cli> "FT.SEARCH" "pizza:index" "www.singlepage.com @date_added:[1497830400 1498780800]" "LIMIT" "0" "100"
+```
+
+cómo se 👀 en la sentencia anterior los valores del campo `date_added` son `NUMERIC` por lo que en nuestro método `Search` se realiza una transformación de dicho campo, además de extrapolar las funcionalidades descritas en la consulta de redis.
+
+```go
+func (h *Handler) Search(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	q := r.URL.Query().Get("q")
+	start := r.URL.Query().Get("start")
+	end := r.URL.Query().Get("end")
+	var query string
+	if start != "" && end != "" {
+
+      dateStart, err := time.Parse("2006-01-02", start)
+      if err != nil {
+        log.Fatal(err)
+      }
+      dateEnd, err := time.Parse("2006-01-02", end)
+      if err != nil {
+        log.Fatal(err)
+      }
+		query = fmt.Sprintf(
+			`%s @date_added:[%d %d]`, q, dateStart.Unix(), dateEnd.Unix(),
+		)
+	} else {
+		query = q
+	}
+	data, err := findQuery(
+		r.Context(),
+		h.rdb,
+		query,
+	)
+  ...
+}
+```
+Es válido destacar que `findQuery` es el método que realiza la llamada a redis permitiendo obtener el resultado esperado.
+
+```go
+func findQuery(
+  ctx context.Context,
+  rdb *redis.Client,
+  query string,
+) (map[string]interface{}, error) {
+	data := make(map[string]interface{})
+	var values []interface{}
+
+	result, err := rdb.Do(
+		ctx,
+		"FT.SEARCH",
+		domain.INDEX,
+		query,
+		"LIMIT",
+		0,
+		100,
+	).Result()
+	if err != nil {
+		return nil, err
+	}
+	total := result.([]interface{})[0]
+	docs := result.([]interface{})[1:]
+
+	for i, doc := range docs {
+		if i%2 != 0 {
+			value := make(map[string]interface{})
+			var k, v string
+			for j, it := range doc.([]interface{}) {
+				if j%2 == 0 {
+					k = it.(string)
+				}
+				if j%2 != 0 {
+					v = it.(string)
+				}
+				value[k] = v
+			}
+			values = append(values, value)
+		}
+	}
+
+	data["total"] = total
+	data["total_peer_page"] = len(values)
+	data["docs"] = values
+	return data, nil
+}
+```
+> 📌 No todo es color de rosa, en este caso redis retorna cómo resultado un arreglo `[count, key,[key value,...],...]`, y llevarlo al formato de objeto json final fue un reto. Al final del tutorial te dejaré un enlace donde se implementa esa lógica pero con `javascript`. Y sí estrañe `javascript` sobre todo las funciones *map,reduce y filter*  en ese momento 🤪.
+
+
+El segundo *endpoint* `/pizzas/near` permite realizar búsquedas  🗺️ *geo referenciadas* sobre el campo `location` previamente definido en el esquema. Con el objetivo de encontrar todos los restaurantes que se encuentren en un radio de 10 km dentro de la longitud y latitud indicada.
+
+> 📌 Para que pueda ser utilizada esta característica, es necesario guardar los datos de longitud y latitud unidos por (`,`) e.g: `"-76.616173,39.305015"`
+
+```bash
+curl -X 'GET' \
+  'http://localhost:8000/pizzas/near?lon=-76.566984&lat=39.28663&r=10&u=km' \
+  -H 'accept: application/json'
+
+# result
+{
+  "docs": [
+   {
+      ...
+      "location": "-76.616173,39.305015",
+      ...
+   },
+  ],
+  "total": 49,
+  "total_peer_page": 49
+}
+```
+Nuestra consulta en redis sería la siguinte
+
+```bash
+redis-cli>"FT.SEARCH" "pizza:index" "@location:[-76.566984 39.28663 10 km]" "LIMIT" "0" "100"
+```
+
+Nuestro método `FindNearPizzas` extrapolando la consulta anterior sería el siguiente.
+
+> 📌 Aquí cómo dato curioso es importante pasarle el radio de búsqueda y la unidad de medida (`km|mi`).
+
+```go
+func (h *Handler) FindNearPizzas(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+
+	longitude := r.URL.Query().Get("lon")
+	latitude := r.URL.Query().Get("lat")
+	radius := r.URL.Query().Get("r")
+	unit := r.URL.Query().Get("u")
+
+	data, err := findQuery(
+		r.Context(),
+		h.rdb,
+		fmt.Sprintf(
+			`@location:[%s %s %s %s]`,
+			longitude,
+			latitude,
+			radius,
+			unit,
+		),
+	)
+  ...
+}
+```
+
+El tercer *endpoint* `/pizzas/stats` nos permite realizar una agregación de los restaurantes de pizzas, basada en la fecha que se le indique por parametro. Con el objetivo de obtener la cantidad de restaurantes que se habían creado durante ese rango de fecha
+
+```bash
+curl -X 'GET' \
+  'http://localhost:8000/pizzas/stats?date=2017-06-19' \
+  -H 'accept: application/json'
+
+# result
+{
+  "docs": [
+   {
+      "__generated_aliascount": "25",
+      "date_added": "1497916800"
+   },
+   {
+      "__generated_aliascount": "31",
+      "date_added": "1498176000"
+   },
+   ...
+  ],
+  "total": 71,
+  "total_peer_page": 35
+}
+```
+Nuestra consulta en redis sería la siguinte, permitiendo:
+
+ - realizar una búsqueda de aquellos elementos a partir de una fecha
+ - agrupar por la fecha
+ - aplicar una función `REDUCE` sobre los mismos
+ - aplicar una función `SORT` en base a la fecha
+
+```bash
+redis-cli>"FT.AGGREGATE" "pizza:index" "@date_added:[1497830400 +inf]" "GROUPBY" "1" "@date_added" "REDUCE" "COUNT" "0" "SORTBY" "2" "@date_added" "ASC" "LIMIT" "0" "100"
+```
+
+Nuestro método `StatsByDate` extrapolando la consulta anterior sería el siguiente.
+
+```go
+func (h *Handler) StatsByDate(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+
+	date := r.URL.Query().Get("date")
+	dateStats, err := time.Parse("2006-01-02", date)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	data, err := aggregationQueryBytime(
+		r.Context(),
+		h.rdb,
+		fmt.Sprintf(
+			`@date_added:[%d +inf]`,
+			dateStats.Unix(),
+		),
+		"@date_added",
+	)
+ ...
+}
+```
+El método `aggregationQueryBytime` al igual que el `findQuery` contiene la lógica para extrapolar la consulta de redis, retornando la misma estructura de datos.
+
+```go
+func aggregationQueryBytime(
+	ctx context.Context,
+	rdb *redis.Client,
+	query string,
+	aggregateField string,
+) (map[string]interface{}, error) {
+	data := make(map[string]interface{})
+	var values []interface{}
+
+	result, err := rdb.Do(
+		ctx,
+		"FT.AGGREGATE",
+		domain.INDEX,
+		query,
+		"GROUPBY",
+		1,
+		aggregateField,
+		"REDUCE",
+		"COUNT",
+		0,
+		"SORTBY",
+		2,
+		aggregateField,
+		"ASC",
+		"LIMIT",
+		0,
+		100,
+	).Result()
+	if err != nil {
+		return nil, err
+	}
+  ...
+}
+```
+
+#### Conclusión
+
+A través de este tutorial, pudimos desarrollar una aplicación en go y redis, donde abordamos conceptos propios de la base de datos, cómo el uso de los *pipeline* y el trabajo con los *HSet* tipo de dato mas avanzado.
+
+Pudimos ver en un ejemplo real las bondades del módulo *rediSearch* así cómo sus particularidades en el manejo de los índices y en la definición de los esquemas de los mismos.
+
+Se trabajó con el paquete `gorrilla/mux` para la confección de nuestro servicio web y se tocaron particularidades del mismo, tal es el caso de acceder a los valores pasados por las `URL` cómo los *query params* y los *path params*.
+
+Los *endpoints* explicados permitieron conocer las bondades que presenta el módulo *rediSearch*, brindando la posibilidad de extrapolar este caso de uso en particular para cualquier problemática que contenga tipos de datos geográficos, rangos de fecha, campos de texto donde se pueda realizar ***full text search*** o que simplemente se requieran realizar tareas de agregación sobre estos conjunto de datos.
+
+#### Recursos
+
+- [Pizzas Dataset](https://data.world/datafiniti/pizza-restaurants-and-pizzas-on-their-menus/workspace/project-summary?agentid=datafiniti&datasetid=pizza-restaurants-and-pizzas-on-their-menus)
+- [Finding Bigfoot RESTfully with Express + RediSearch](https://www.youtube.com/watch?v=ZmZofPJH2gs&list=PLratyGi2ixLsqd3SRcsJticE9yt5LDX3R&index=5)
+- [RediSearch - Redis Secondary Index & Query Engine](https://oss.redis.com/redisearch/master/)
+- [redisearch-go](https://github.com/RediSearch/redisearch-go)
+
+
+### Código del proyecto
+
+[Aquí tienes el repositorio en **GitHub**](https://github.com/kenriortega/app-redis-for-blog) con todo el código utilizado en el artículo. Por si quieres revisarlo.
+
+
