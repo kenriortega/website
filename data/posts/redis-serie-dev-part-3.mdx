@@ -236,7 +236,7 @@ func main() {
 	}
 }
 ```
-Para la 🏗️ de nuestro servicio ***REST*** `API` usaremos una vez más el paquete [`gorrilla/mux`](https://github.com/gorilla/mux). Además, emplearemos un módulo propio llamado `httpsrv` para encapsular las funcionalidades básicas de crear un servidor web. Puedes chequearlo en la ruta `pkg/httpsrv/httpsrv.go`, ahí están definidos los métodos `NewServer` y `Start`. En vías de agilizar y no hacer tan largo este tutorial, nos centraremos en los siguientes *endpoints*:
+Para la 🏗️ de nuestro servicio ***REST*** `API` usaremos una vez más el paquete [`gorilla/mux`](https://github.com/gorilla/mux). Además, emplearemos un módulo propio llamado `httpsrv` para encapsular las funcionalidades básicas de crear un servidor web. Puedes chequearlo en la ruta `pkg/httpsrv/httpsrv.go`, ahí están definidos los métodos `NewServer` y `Start`. En vías de agilizar y no hacer tan largo este tutorial, nos centraremos en los siguientes *endpoints*:
 
 - `/search`
 - `/pizzas/near`
@@ -441,7 +441,7 @@ curl -X 'GET' \
   "total_peer_page": 35
 }
 ```
-La siguinte consulta en redis permite:
+La siguiente consulta en redis permite:
 
  - realizar una búsqueda de aquellos elementos a partir de una fecha
  - agrupar por la fecha
@@ -520,7 +520,7 @@ A través de este tutorial, pudimos desarrollar una aplicación en go y redis, d
 
 Pudimos ver en un ejemplo real las bondades del módulo *rediSearch*, así como sus particularidades en el manejo de los índices y en la definición de los esquemas de los mismos.
 
-Se trabajó con el paquete `gorrilla/mux` para la confección de nuestro servicio web y se tocaron particularidades del mismo, tal es el caso de acceder a los valores pasados por las `URL` como los *query params* y los *path params*.
+Se trabajó con el paquete `gorilla/mux` para la confección de nuestro servicio web y se tocaron particularidades del mismo, tal es el caso de acceder a los valores pasados por las `URL` como los *query params* y los *path params*.
 
 Los *endpoints* explicados, permitieron conocer las bondades que presenta el módulo *rediSearch*, brindando la posibilidad de extrapolar, este caso de uso en particular, para cualquier problemática que contenga tipos de datos geográficos, rangos de fecha, campos de texto donde se pueda realizar ***full text search*** o que simplemente se requieran realizar tareas de agregación sobre estos conjunto de datos.
 
