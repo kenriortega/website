@@ -1,0 +1,276 @@
+---
+
+title: 'Usando go y redis como bróker de mensajería '
+
+date: '2021-11-16'
+tags:
+  - '💻 Development'
+  - 'Redis'
+  - 'Golang'
+  - 'Message Broker'
+---
+
+Los brókers de mensajería permiten desacoplar el intercambio de mensajes entre las aplicaciones, haciendo uso de patrones (*Pub/Sub* | *Queue*). Son tecnologías que están dedicadas a procesar e intercambiar mensajes de datos entre aplicaciones, haciendo de mediador entre las mismas. Entre sus características podemos destacar:
+
+- Enrutan los mensajes, desacoplan los productores de mensajes de los consumidores, organizan y comprueban los mensajes, almacenan los mensajes.
+- Presentan diversos patrones de mensajería (Colas de mensajes *Queue* y publicador-suscriptor *Pub/Sub*).
+- Las colas de mensajes ofrecen mejor oportunidad para escalar el procesamiento.
+- El *pub/sub* permite transmitir eventos de forma asíncrona.
+
+Entre los mas usados podemos nombrar [Apache Kafka](https://kafka.apache.org/) y [RabbitMQ](https://www.rabbitmq.com/). De estos dos existe mucha documentacion y cursos online que puede ser consultada.
+
+El dia de hoy estaremos hablando sobre un tipo de dato que tiene implementado redis a partir de su version 5.0. La cual es llamada [Redis Stream](https://redis.io/topics/streams-intro). 
+
+El tipo de datos *stream* es una estructura de datos para realizar operaciones de anexo de datos. El cual pude ser comparado con el registro de eventos en un fichero *log*, al menos conceptualmente. En este caso redis Stream implementa operaciones mas complejas para superar las limitaciones de los archivos *logs*.
+
+Redis stream implementa características que lo hacen super interesantes para abordar en este tutorial:
+
+Presenta un conjunto de operaciones de bloqueo que permiten a los consumidores puedan esperar nuevos datos agregados a un flujo por los productores
+Además del concepto llamado Grupos de consumidores como *apache Kafka*.
+
+> Redis reimplementa una idea similar en términos completamente diferentes, pero el objetivo es el mismo: permitir que un grupo de clientes coopere consumiendo una porción diferente del mismo flujo de mensajes.
+
+Teniendo esta breve explicacion espero que al igual que yo estes motivado en usar esta caracteristica, al igual que si estuviesemos usando *apache kafka*. Para mas detalles teoricos y ejemplos de los comandos utilizados en este tutorial, como siempre te los dejare en el apartado de recursos.
+
+> "*Talk is easy, show me the code*" by *Linus Torvalds*
+
+Buscando en *github* repositorios como fuente de inspiracion sobre el tema en cuestion, encontre el siguiente proyecto [Helsinki Transit System - Real-Time Vehicle Tracking with Redis](https://github.com/redis-developer/expert-garbanzo) el cual fue lanzado en *Redis 2021 Hackathon*, este cuenta con una excelente implementacion desarrollada en go y redis donde hace uso de los tipos de datos *redis stream, pub/sub y timeseries* dataset en ***tiempo real***. 
+
+El dia de hoy teniendo como base este genial proyecto, vamos a realizar nuestra reimplementacion para el envio de eventos provenientes  de los vehiculos de trasnporte municipal hacia nuestra instancia *redis*.
+
+### ⚙️ Configuración inicial de nuestro proyecto
+
+En este caso usaremos *redis*, la cual es una imagen de docker configurada con esta funcionalidad.
+
+```bash
+# Download image
+podman pull redislabs/redis:latest
+# Run the container for our redis instance
+podman run --name redis --rm -e ALLOW_EMPTY_PASSWORD=yes -p 6379:6379 redislabs/redis:latest
+```
+Nuestro repositorio de ejemplo cuenta con todos los ficheros necesarios para seguir este tutorial. Este es el estado actual de las carpetas.
+
+
+```bash
+├── data
+│   └── pizzas.csv
+├── examples
+│   ├── cacheapp
+│   │   └── main.go
+│   ├── minibroker
+│   │   ├── consumer
+│   │   │   └── main.go
+│   │   ├── domain
+│   │   │   └── vp.go
+│   │   └── producer
+│   │       ├── cmd
+│   │       │   └── producer.go
+│   │       └── main.go
+│   ├── minisearch
+│   │   ├── domain
+│   │   │   ├── pizza.go
+│   │   │   └── pizzasearch.go
+│   │   ├── handlers
+│   │   │   └── handlers.go
+│   │   ├── http.rest
+│   │   └── main.go
+│   └── ratelimit
+│       ├── http.rest
+│       └── main.go
+├── go.mod
+├── go.sum
+├── makefile
+├── pkg
+│   ├── db
+│   │   └── redis.go
+│   ├── httpsrv
+│   │   └── httpsrv.go
+│   └── mq
+│       └── mqtt.go
+└── README.md
+```
+Como se 👀 tenemos un nuevo proyecto llamado `minibroker`, aquí se encuentran alojados nuestros servicios y será el centro de esta aventura. La idea final de este tutorial es entender como enviar datos a traves de *redis stream* y como consumir esos datos siguiendo el patron *producer/consumer*
+
+### 🧑‍🏫 Explicación del proyecto
+
+El proyecto `minibroker` está compuesto por dos funcionalidades:
+
+- Productor de eventos (*producer*)
+- Consumidor de eventos (*consumer*)
+
+#### 🚇 Productor de eventos
+
+La primera funcionalidad que estaremos explicando tiene como objetivo subscribirse a nuestra fuente de datos en tiempo real [High-frequency positioning](https://digitransit.fi/en/developers/apis/4-realtime-api/vehicle-positions/) a traves de un protocolo de mensajeria llamado [mqtt](https://mqtt.org/) mas detalles en la descripcion de su sitio oficial.
+
+```go
+func main() {
+  // init project
+	ctx := context.Background()
+	rdb := db.GetRedisDbClient(context.Background())
+
+  // control signal
+	quitChannel := make(chan os.Signal, 1)
+  // init mqtt client
+	msgBroker := mq.NewMsgBroker(1024)
+	mq.InitMQTTClient(msgBroker)
+
+	// logic for mqtt sub -> send data to redis stream
+	for i := 0; i < nWorkers; i++ {
+		go cmd.SendData(ctx, msgBroker.StagingC, rdb)
+	}
+
+	signal.Notify(quitChannel, syscall.SIGINT, syscall.SIGTERM)
+	<-quitChannel
+}
+```
+La funcion `main` esta compouesta por la instancia de nuestro client mqtt el cual una vez subscrito es capaz de recolectar la informacion devolviendola en un  [`channel`](https://golangdocs.com/channels-in-golang) de tipo `<-chan []byte` el cual es pasado por parametro a nuestra funcion `SendData`.
+
+```go
+func SendData(ctx context.Context, payload <-chan []byte, client *redis.Client) {
+
+	for msg := range payload {
+
+		// Receive the content of the MQTT message and de-serialize bytes into
+		// struct
+		e := &domain.EventHolder{}
+		err := mq.DeserializeMQTTBody(msg, e)
+
+		if err != nil {
+			log.Println(err)
+			continue
+		}
+
+		pipe := client.TxPipeline()
+		// // 2. XADD the full event body to a stream of events, these
+		value, err := e.VP.ToMAP()
+		if err != nil {
+			log.Fatal(err)
+		}
+		pipe.XAdd(
+			ctx, &redis.XAddArgs{
+				Stream: "events:vp:bus",
+				Values: value,
+			},
+		)
+		// Execute Pipe!
+		_, err = pipe.Exec(ctx)
+		// Failed to Write an Event
+		if err != nil {
+			log.Fatal(err)
+		}
+	}
+}
+```
+La funcion `SendData` ademas de leer los mensajes provenientes del servicio de mqtt y parsear esa informacion es la encargada de realizar la conexion con la instancia de redis y de ejecutar el comando *XADD* el cual es el encargado de ir insertando los eventos dentro de *redis Stream*,
+el comando en nuestra implementacion en go recibe por parametros un `redis.XAddArgs` el cual en sus propiedades basicas y de interes para este turorial son `Stream` el cual contiene el nombre del topico por donde se emitiran los eventos y `Value` el cual hace mencion a la data que se transmitira.
+
+> 📌 Una practica comun es enviar tipos de datos como hash map o string
+
+```go
+    ...
+		value, err := e.VP.ToMAP()
+		if err != nil {
+			log.Fatal(err)
+		}
+		pipe.XAdd(
+			ctx, &redis.XAddArgs{
+				Stream: "events:vp:bus",
+				Values: value,
+			},
+		)
+    ...
+```
+#### 🚇 Consumidor de eventos
+
+
+```go
+
+func main() {
+	ctx := context.Background()
+	rdb := db.GetRedisDbClient(context.Background())
+	streams := []string{"events:vp:bus"}
+	var ids []string
+	if groupName == "" {
+		groupName = "consumer-" + StringWithCharset()
+	}
+	for _, v := range streams {
+		ids = append(ids, ">")
+		err := rdb.XGroupCreate(ctx, v, groupName, "0").Err()
+		if err != nil {
+			log.Println(err)
+		}
+
+	}
+
+  // for each stream it requires an '>' :{"events:vp:bus", ">"}
+	streams = append(streams, ids...) 
+	fmt.Printf("Consumer gruop with name: [%s]\n", groupName)
+	for {
+		entries, err := rdb.XReadGroup(ctx, &redis.XReadGroupArgs{
+			Group:    groupName,
+			Consumer: fmt.Sprintf("%d", time.Now().UnixNano()),
+			Streams:  streams,
+			Count:    2,
+			Block:    0,
+			NoAck:    false,
+		}).Result()
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		for _, stream := range entries {
+			ReceiveMSG(ctx, stream, rdb, groupName)
+		}
+
+	}
+}
+```
+
+```go
+
+func ReceiveMSG(
+  ctx context.Context,
+  stream redis.XStream,
+  rdb *redis.Client,
+  groupName string,
+) {
+	for i := 0; i < len(stream.Messages); i++ {
+		messageID := stream.Messages[i].ID
+		values := stream.Messages[i].Values
+		bytes, err := json.Marshal(values)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		rdb.XAck(
+			ctx,
+			stream.Stream,
+			groupName,
+			messageID,
+		)
+
+		fmt.Printf("ConsumerGroup: [%s] data : %s\n", groupName, string(bytes))
+	}
+}
+```
+#### DEMO
+
+![requests](/redis/redis-stream.gif)
+
+#### Conclusión
+
+A través de este tutorial, pudimos desarrollar una aplicación en go y redis, donde abordamos conceptos propios de la base de datos,
+
+#### Recursos
+
+- [Redis Stream](https://redis.io/topics/streams-intro)
+- [Digitransit](https://digitransit.fi/en/developers/apis/4-realtime-api/vehicle-positions/)
+- [Helsinki Transit System - Real-Time Vehicle Tracking with Redis](https://github.com/redis-developer/expert-garbanzo/blob/master/hslservices/cmd/mqtt/main.go)
+- [wallertme cli app](https://github.com/piqba/wallertme)
+
+
+### Código del proyecto
+
+[Aquí tienes el repositorio en **GitHub**](https://github.com/kenriortega/app-redis-for-blog) con todo el código utilizado en el artículo. Por si quieres revisarlo.
+
+
