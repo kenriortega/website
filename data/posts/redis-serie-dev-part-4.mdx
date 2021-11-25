@@ -33,11 +33,11 @@ El tipo de datos *stream* es para realizar operaciones de anexo de datos. El cua
 
 > Redis reimplementa una idea similar en los Grupos de consumidores como *apache Kafka*, lo que en términos completamente diferentes, pero el objetivo es el mismo: permitir que un grupo de clientes coopere consumiendo una porción diferente del mismo flujo de mensajes.
 
-Teniendo esta breve explicación espero que estes motivado en usar esta característica, como sí estuviesemos usando *apache kafka*. Para más detalles teóricos y ejemplos de los comandos utilizados en este tutorial puedes revisar el apartado de recursos.
+Teniendo esta breve explicación espero que estés motivado en usar esta característica, como sí estuviésemos usando *apache kafka*. Para más detalles teóricos y ejemplos de los comandos utilizados en este tutorial puedes revisar el apartado de recursos.
 
 Realizando una 🔍 en *github* de posibles fuentes de inspiración sobre el tema en cuestión, encontré el siguiente proyecto [Helsinki Transit System - Real-Time Vehicle 🚍 Tracking with Redis](https://github.com/redis-developer/expert-garbanzo) el cual fue lanzado en la *Redis 2021 Hackathon*, este cuenta con una excelente implementación en go y redis, donde se hace uso de los tipos de datos *redis stream, pub/sub y timeseries* trabajando con un dataset en ***tiempo real***.
 
-El día de hoy teniendo como base este genial proyecto, vamos a realizar una reimplementación para el envio de eventos, provenientes  de los 🚍 de trasnporte municipal hacia nuestra instancia *redis*.
+El día de hoy teniendo como base este genial proyecto, vamos a realizar una reimplementación para el envío de eventos, provenientes  de los 🚍 de transporte municipal hacia nuestra instancia *redis*.
 
 ### ⚙️ Configuración inicial de nuestro proyecto
 
@@ -124,7 +124,7 @@ func main() {
 	<-quitChannel
 }
 ```
-La función `main` esta compouesta por la instancia de nuestro client *mqtt*, el cual una vez subscrito es capaz de recolectar la información retornando en un  [`channel`](https://golangdocs.com/channels-in-golang) de tipo `<-chan []byte` el cuerpo del mensaje. Los métodos `NewMsgBroker` y `InitMQTTClient` forman parte de un nuevo paquete dentro de nuestro proyecto llamado `mq` el cual se encuentra en la ruta `pkg/mq/mqtt.go` este paquete fue confeccionado siguiendo el proyecto base, haciendo uso de la liberería de terceros [github.com/eclipse/paho.mqtt.golang](https://github.com/eclipse/paho.mqtt.golang). Una vez obtenido el mensaje este es pasado por parámetro a la función `SendData`.
+La función `main` esta compuesta por la instancia de nuestro client *mqtt*, el cual una vez subscrito es capaz de recolectar la información retornando en un  [`channel`](https://golangdocs.com/channels-in-golang) de tipo `<-chan []byte` el cuerpo del mensaje. Los métodos `NewMsgBroker` y `InitMQTTClient` forman parte de un nuevo paquete dentro de nuestro proyecto llamado `mq` el cual se encuentra en la ruta `pkg/mq/mqtt.go` este paquete fue confeccionado siguiendo el proyecto base, haciendo uso de la liberería de terceros [github.com/eclipse/paho.mqtt.golang](https://github.com/eclipse/paho.mqtt.golang). Una vez obtenido el mensaje este es pasado por parámetro a la función `SendData`.
 
 ```go
 func SendData(ctx context.Context, payload <-chan []byte, client *redis.Client) {
@@ -180,7 +180,7 @@ La función `SendData` además de leer los mensajes provenientes del servicio de
 		)
     ...
 ```
-En el fragemento de código anterior se encuentra implementado en go del comando *XADD* este recibe por parametros un `redis.XAddArgs` entre sus propiedades básicas y de interes para este turorial se destacan `Stream` contiene el nombre del tópico por donde se emitirán los eventos y `Value` hace mención a la data que se transmitirá.
+En el fragemento de código anterior se encuentra implementado en go del comando *XADD*, este recibe por parámetros un `redis.XAddArgs` entre sus propiedades básicas y de interés para este tutorial se destacan `Stream` contiene el nombre del tópico por donde se emitirán los eventos y `Value` hace mención a la data que se transmitirá.
 
 #### 🚇 Consumidor de eventos
 
@@ -235,7 +235,7 @@ func main() {
 ```
 La función `main` esta compuesta por 2 fases:
 
-- La fase inicial es la encargada de construir de forma dínamica nuestros tópicos y nombres de grupos de consumidores permitiendo crear nuestro `XGroupCreate`.
+- La fase inicial es la encargada de construir de forma dinámica nuestros tópicos y nombres de grupos de consumidores permitiendo crear nuestro `XGroupCreate`.
 - La segunda fase es la encargada de registrar el grupo de consumidor y de leer los tópicos definidos con la función `XReadGroup`, dando paso a procesar todos los `streams`(tópicos).
 
 ```go
@@ -266,7 +266,7 @@ func ReceiveMSG(
 }
 ```
 
-En este punto de la función `main` nos encontramos `ReceiveMSG` esta recibe una estructura de datos `redis.XStream` la cual contiene el mensaje proveniente de ese tópico. En nuestro caso solo lo estamos imprimiendo por la terminal de líneas de comandos. Existen otros casos de usos donde se podría hacer uso más detallado de este proceso como un envio de notificaciones hacia diversas plataformas como este otro repositorio de github [wallertme](https://github.com/piqba/wallertme), o seguir generando pipelines de procesamiento de datos como [Helsinki Transit System - Real-Time Vehicle Tracking with Redis](https://github.com/redis-developer/expert-garbanzo) proyecto de base de este turorial.
+En este punto de la función `main` nos encontramos `ReceiveMSG` esta recibe una estructura de datos `redis.XStream` la cual contiene el mensaje proveniente de ese tópico. En nuestro caso solo lo estamos imprimiendo por la terminal de líneas de comandos. Existen otros casos de usos donde se podría hacer uso más detallado de este proceso como un envío de notificaciones hacia diversas plataformas como este otro repositorio de github [wallertme](https://github.com/piqba/wallertme), o seguir generando pipelines de procesamiento de datos como [Helsinki Transit System - Real-Time Vehicle Tracking with Redis](https://github.com/redis-developer/expert-garbanzo) proyecto de base de este turorial.
 
 
 #### DEMO
@@ -277,7 +277,7 @@ En este punto de la función `main` nos encontramos `ReceiveMSG` esta recibe una
 
 - A través de este tutorial, pudimos desarrollar una aplicación en go y redis, donde abordamos conceptos propios de la base de datos, como el uso de los `streams` tipo de dato muy potente que permite que nuestra instancia de redis pueda ser utilizada como bróker de mensajería.
 - Se pudo utilizar una libería nueva para consumir información proveniente de [github.com/eclipse/paho.mqtt.golang](https://github.com/eclipse/paho.mqtt.golang).
-- Se abordaron conceptos referentes a sistemas de alto impacto relacionados con las colas de mensajes y comunicacion asíncrona en el envio de eventos.
+- Se abordaron conceptos referentes a sistemas de alto impacto relacionados con las colas de mensajes y comunicación asíncrona en el envio de eventos.
 - Se mostraron posibles casos de usos en la funcionalidad del productor y consumidor de eventos.
 
 #### Recursos
