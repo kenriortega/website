@@ -3,9 +3,9 @@ import Head from 'next/head'
 
 
 const Meta = ({
-    title = "Kenri Blog",
-    description = "My custom blog",
-    keywords = "blog, programing" }) => {
+    title = "Kenriortega Blog",
+    description = "Kenriortega Blog and personal website",
+    keywords = "blog, programing,golang,redis" }) => {
     return (
         <Head>
             <meta name="viewport" content="width=device-width, initial-scale=1" />
