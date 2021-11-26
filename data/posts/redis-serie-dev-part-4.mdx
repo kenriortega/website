@@ -266,7 +266,7 @@ func ReceiveMSG(
 }
 ```
 
-En este punto de la función `main` nos encontramos `ReceiveMSG` esta recibe una estructura de datos `redis.XStream` la cual contiene el mensaje proveniente de ese tópico. En nuestro caso solo lo estamos imprimiendo por la terminal de líneas de comandos. Existen otros casos de usos donde se podría hacer uso más detallado de este proceso como un envío de notificaciones hacia diversas plataformas como este otro repositorio de github [wallertme](https://github.com/piqba/wallertme), o seguir generando pipelines de procesamiento de datos como [Helsinki Transit System - Real-Time Vehicle Tracking with Redis](https://github.com/redis-developer/expert-garbanzo) proyecto de base de este turorial.
+En este punto de la función `main` nos encontramos `ReceiveMSG` esta recibe una estructura de datos `redis.XStream` la cual contiene el mensaje proveniente de ese tópico. En nuestro caso solo lo estamos imprimiendo por la terminal de líneas de comandos. Existen otros casos de usos donde se podría hacer uso más detallado de este proceso como un envío de notificaciones hacia diversas plataformas, o seguir generando pipelines de procesamiento de datos como [Helsinki Transit System - Real-Time Vehicle Tracking with Redis](https://github.com/redis-developer/expert-garbanzo) proyecto de base de este turorial.
 
 
 #### DEMO
@@ -278,14 +278,12 @@ En este punto de la función `main` nos encontramos `ReceiveMSG` esta recibe una
 - A través de este tutorial, pudimos desarrollar una aplicación en go y redis, donde abordamos conceptos propios de la base de datos, como el uso de los `streams` tipo de dato muy potente que permite que nuestra instancia de redis pueda ser utilizada como bróker de mensajería.
 - Se pudo utilizar una libería nueva para consumir información proveniente de [github.com/eclipse/paho.mqtt.golang](https://github.com/eclipse/paho.mqtt.golang).
 - Se abordaron conceptos referentes a sistemas de alto impacto relacionados con las colas de mensajes y comunicación asíncrona en el envio de eventos.
-- Se mostraron posibles casos de usos en la funcionalidad del productor y consumidor de eventos.
 
 #### Recursos
 
 - [Redis Stream](https://redis.io/topics/streams-intro)
 - [Digitransit](https://digitransit.fi/en/developers/apis/4-realtime-api/vehicle-positions/)
 - [Helsinki Transit System - Real-Time Vehicle Tracking with Redis](https://github.com/redis-developer/expert-garbanzo)
-- [wallertme cli app](https://github.com/piqba/wallertme)
 
 
 ### Código del proyecto
