@@ -102,6 +102,11 @@ const MenuLinks = ({ isOpen,  colorMode, toggleColorMode}) => {
                     textStyle="linkName"
                 > 😏 Sobre mi
                 </MenuItem>
+                <MenuItem to="/cv.html"
+                    className="link-name"
+                    textStyle="linkName"
+                > 📘 CV
+                </MenuItem>
                 <MenuItem to="/rss.xml"
                     className="link-name"
                     textStyle="linkName"
