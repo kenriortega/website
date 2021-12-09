@@ -2,7 +2,7 @@ import { formatDate } from "../lib/format-date";
 import { Flex, Text, Tag } from "./elements";
 import { IconCalendar, IconClock } from "./icons";
 import { OpenPR } from "./OpenPR";
-import Share from './share.tsx'
+import Share from './share'
 
 export const PostMetadata = ({ metadata }) => {
     return (

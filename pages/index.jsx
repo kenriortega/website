@@ -1,7 +1,8 @@
 
 
-import { Box, Container, Flex, Heading, } from "../components/elements"
+import { Box, Container, Flex, Heading,Text } from "../components/elements"
 import { formatDate } from "../lib/format-date";
+import { orderByDate } from "../lib/order-by-date";
 import { getAllFilesFrontMatter } from '../lib/mdx'
 import { PostListItem, } from '../components/PostListItem'
 import { ScrollToTop, } from '../components/ScrollToTop'
@@ -55,7 +56,11 @@ export default function Home({ posts }) {
       <Container maxW="container.1sm" px={[0, 4]}>
         <Heading as="h2" m={8} size="md">
           Hola 👋 soy Enrique Ortega conocido por @kenriortega y este es mi blog!!
+
         </Heading>
+        <Text m={8} size="md">
+          Estará enfocado el blog a compartir pruebas de conceptos basadas en los siguientes temas golang y nodejs. El uso de estos con sistemas de bases de datos como redis, postgresql y brokers de mensajerias como apache kafka. Otras tecnologías que me resultan interesantes como es el lenguaje Rust y tecnologías emergentes dentro de la web3.0
+        </Text>
         <ScrollToTop />
         <Flex
           d="flex"
@@ -85,6 +90,11 @@ export default function Home({ posts }) {
                   </a>
                 </Link>
               ))}
+            {currentPage !== maxPage && (
+              <Text fontSize="xl" fontWeight="bold" p={6} ref={setElement}>
+                Cargando...
+              </Text>
+            )}
           </Box>
         </Flex>
       </Container>
@@ -94,7 +104,8 @@ export default function Home({ posts }) {
 }
 
 export async function getStaticProps() {
-  const posts = await getAllFilesFrontMatter('posts')
+  const unorderedPosts = await getAllFilesFrontMatter('posts')
+  const posts = unorderedPosts.sort(orderByDate);
   return {
     props: {
       posts

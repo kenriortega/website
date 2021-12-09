@@ -1,0 +1,293 @@
+---
+
+title: 'Agregando un `rate limit` 🛑 a nuestras API con Redis y Go'
+
+date: '2021-11-09'
+tags:
+  - '💻 Development'
+  - 'Redis'
+  - 'Golang'
+---
+
+Otro de los casos de uso más frecuentes que solemos afrontar en nuestra actividad de desarrollo es: ¿Cómo implementar un `rate limit` a nuestros servicios? (***api*** ***servers***). En este artículo continuaremos haciendo uso de nuestra base de datos [Redis](https://redis.io/) y del lenguaje de programación [golang](https://golang.org/) e implementaremos un *rate limit* 🔥.
+
+> 📖 Rate limiting is a strategy for limiting network traffic. Rate limiting can help stop certain kinds of malicious bot activity. It can also reduce strain on web servers. However, rate limiting is not a complete solution for managing bot activity. [*cloudflare blog*](https://www.cloudflare.com/learning/bots/what-is-rate-limiting/)
+
+El uso de `rate limit` puede ayudarnos a mitigar posibles ataques a nuestra API por ejemplo:
+
+- Brute force attacks
+- DoS and DDoS attacks
+- Web scraping
+
+
+En este tutorial se asume que tenemos instalada la base de datos redis  y el lenguaje de programación [*golang downloads site*](https://golang.org/doc/install).
+
+### Configuración inicial de nuestro proyecto
+
+En este caso usaremos redis, pero a través de [podman](https://podman.io/). El cual es un motor de contenedores como docker.  Para más detalles consultar la [documentación oficial](https://podman.io/whatis.html).
+
+```bash
+# Download image
+podman pull quay.io/bitnami/redis
+# Run the container for our redis instance
+podman run --name redis --rm -e ALLOW_EMPTY_PASSWORD=yes -p 6379:6379 quay.io/bitnami/redis:latest
+```
+
+En el artículo [Mejorando los tiempos de respuesta de nuestras API con Redis y Go](https://kenridev.vercel.app/blog/redis-serie-dev-part-1) inicializamos un proyecto en github, aquí te dejo las instrucciones por si deseas descargar el código del ejemplo:
+
+```bash
+
+git clone https://github.com/kenriortega/app-redis-for-blog.git
+```
+
+Hemos estructurado el código de la siguiente forma.
+
+```bash
+# Folder structure:
+
+├── examples
+│   ├── cacheapp
+│   │   └── main.go
+│   └── ratelimit
+│       ├── http.rest
+│       └── main.go
+├── go.mod
+├── go.sum
+├── makefile
+├── pkg
+│   └── db
+│       └── redis.go
+└── README.md
+
+```
+
+Pero bueno no pasa nada si decides tan solo extraer las funcionalidades de nuestro `rate limit`.
+Aquí te dejo las instrucciones para inicializar un nuevo proyecto.
+
+```bash
+
+mkdir app
+cd app
+
+# init project using go mod
+go mod init app
+
+# install redis package
+go get github.com/go-redis/redis/v8
+go get -u github.com/gorilla/mux
+
+touch main.go
+```
+
+### Pues comencemos con el desarrollo de la API
+
+En el día de hoy construiremos 🏗️ una ***API***, para esto haremos uso del paquete [`gorrilla/mux`](https://github.com/gorilla/mux), con fines de hacer el tutorial lo más simple posible solo nos concentraremos en la implementación de nuestro caso de uso `rate limit` 🛑 de  `10 calls/20s`.
+
+Nos dirigimos a nuestro fichero  `main.go` y comenzamos en la construcción de nuestro servidor web.
+
+```go
+...
+func main() {
+	var port int
+	flag.IntVar(&port, "port", 8081, "Port to serve")
+	flag.Parse()
+
+	// gorrilla/mux router
+	r := mux.NewRouter()
+
+	// handleFunc for endpoint '/'
+	r.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+		fmt.Printf(w,"Hello")
+	})
+
+	srv := &http.Server{
+		Handler:      r,
+		Addr:         fmt.Sprintf(":%d", port),
+		WriteTimeout: 15 * time.Second,
+		ReadTimeout:  15 * time.Second,
+	}
+
+	log.Println("Server running on http://localhost:",port)
+	log.Fatal(srv.ListenAndServe())
+}
+...
+```
+
+Procedemos a ejecutar nuestro servidor a través de la línea de comandos
+
+```bash
+> go run main.go --port 4000
+```
+
+Luego para chequear que esté correctamente ejecutándose el servicio se pueden usar diversos cliente *REST* `curl`, `postman` etc.
+
+Ahora vamos a ir agregando nuestras variables para nuestro `rate limit`
+
+```go
+...
+const (
+	reqLimit            = 10
+	durationLimit       = 20
+	keyIPRequestsPrefix = "requests"
+)
+...
+```
+Como se 👀 definimos nuestros límites para las solicitudes por clientes y el límite de duración de nuestra `key` en redis, compuesta por `requests:<IP>`.
+
+Para este caso de uso usaremos el IP como identificador principal para saber quién o qué está enviando solicitudes hacia el servidor.
+
+Para ello te comparto este método `extractIpAddr` el cual recibe por parámetros el objeto `req *http.Request`.
+
+```go
+func extractIpAddr(req *http.Request) string {
+	ipAddress := req.RemoteAddr
+	fwdAddress := req.Header.Get("X-Forwarded-For") // capitalisation doesn't matter
+	if fwdAddress != "" {
+		// Got X-Forwarded-For
+		ipAddress = fwdAddress // If it's a single IP, then awesome!
+
+		// If we got an array... grab the first IP
+		ips := strings.Split(fwdAddress, ", ")
+		if len(ips) > 1 {
+			ipAddress = ips[0]
+		}
+	}
+	remoteAddrToParse := ""
+	if strings.Contains(ipAddress, "[::1]") {
+		remoteAddrToParse = strings.Replace(ipAddress, "[::1]", "localhost", -1)
+		ipAddress = strings.Split(remoteAddrToParse, ":")[0]
+	} else {
+		ipAddress = strings.Split(ipAddress, ":")[0]
+	}
+	return ipAddress
+}
+```
+
+Luego de esta función crearemos un `IPController` el cual es una estructura que recibe un cliente de redis `*redis.Client` e implementa los siguientes métodos dentro de la misma.
+
+```go
+
+// IPController ...
+type IPController struct {
+	rdb *redis.Client
+}
+// NewIPController ...
+func NewIPController(rdb *redis.Client) *IPController {
+	return &IPController{
+		rdb: rdb,
+	}
+}
+// createKEY ...
+func (c *IPController) createKEY(ip string) string {
+	return fmt.Sprintf("%s:%s", keyIPRequestsPrefix, ip)
+}
+
+```
+La idea para implementar un `rate limit` es emplear los siguientes comandos `GET`,`SETEX`, `INCR` que nos provee redis. Seguro conoces `GET` para obtener dado una `key` su valor,
+en el caso de `SETEX` es para agregar un valor a una `key` en caso de que no exista y de lo contrario la modifica, el último comando `INCR` es el encargado de incrementar la cantidad de veces q se utiliza esa `key`.
+
+```bash
+
+# redis-cli
+127.0.0.1> GET requests:<IP>
+127.0.0.1> SETEX requests:<IP> 10 0
+127.0.0.1> INCR requests:<IP>
+```
+Agreguemos `AcceptedRequest` como método de nuestro `IPController` extrapolando los comandos de redis anteriormente explicados.
+
+```go
+// AcceptedRequest ...
+func (c *IPController) AcceptedRequest(ctx context.Context, ip string, limit, limitDuration int) (int, bool) {
+	key := c.createKEY(ip)
+
+	// GET requests:<IP>
+	if _, err := c.rdb.Get(ctx, key).Result(); err == redis.Nil {
+		// SETEX requests:<IP> limitDuration 0
+		err := c.rdb.Set(ctx, key, "0", time.Second*time.Duration(limitDuration))
+		if err != nil {
+			log.Println(err)
+			return 0, false
+		}
+	}
+
+	// INCR requests:<IP>
+	if _, err := c.rdb.Incr(ctx, key).Result(); err != nil {
+		log.Println(err)
+		return 0, false
+	}
+
+	// GET requests:<IP>
+	requests, err := c.rdb.Get(ctx, key).Result()
+	if err != nil {
+		log.Println(err)
+		return 0, false
+	}
+	requestsNum, err := strconv.Atoi(requests)
+	if err != nil {
+		log.Println(err)
+		return 0, false
+	}
+
+	if requestsNum > limit {
+		return requestsNum, false
+	}
+
+	return requestsNum, true
+}
+```
+
+Si nos dirigimos a la función `HandleFunc` que maneja la ruta `/`, en este punto del tutorial se encuentra así 👇
+
+```go
+func main() {
+	...
+	// redis instance
+	rdb := db.GetRedisDbClient(context.TODO())
+	r := mux.NewRouter()
+
+	r.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+
+		ip := extractIpAddr(r)
+		controller := NewIPController(rdb)
+		requests, accepted := controller.AcceptedRequest(
+			context.TODO(),
+			ip,
+			reqLimit,
+			durationLimit,
+		)
+		if !accepted {
+			w.WriteHeader(http.StatusTooManyRequests)
+		}
+		w.Header().Add("X-RateLimit-Limit", strconv.Itoa(reqLimit))
+		w.Header().Add("X-RateLimit-Remaining", strconv.Itoa(10-requests))
+
+	})
+	...
+}
+```
+
+Como se 👀 se hace uso de las funciones `extractIpAddr` para definir el identificador principal y de la función `AcceptedRequest` quien maneja el control de nuestras solicitudes entrantes, retornando en caso positivo  `status 200` y en caso de llegar al límite definido por cantidad de solicitudes o de ⏰ de duración `status 429` 🛑. Pues ejecutemos de nuevo el servidor y en una terminal aparte con el `redis-cli` ejecutemos un nuevo comando `MONITOR`, este ultimo nos ayudará a entender el proceso de nuestro rate limit pero desde la vista de la base de datos.
+
+![requests](/redis/redis-rate-limit.gif)
+
+
+#### Conclusión
+
+
+A través de este tutorial, pudimos desarrollar una aplicación en el lenguaje de programación go y Redis. Con la implementación de un `rate limit` en nuesta *API* pudimos agregar una capa de seguridad que nos permita elevar las medidas de seguridad ante posibles ataques de usuarios o bot maliciosos. Pudimos definir como identificador principal el `IP` de nuestros usuarios o posibles atacantes. Ampliamos nuestros concimientos en el uso de nuevos comandos de redis como `INCR` y `MONITOR`.
+
+
+#### Recursos
+
+- [What is a rate limit](https://www.cloudflare.com/learning/bots/what-is-rate-limiting/)
+- [Basic Redis rate limit with go](https://github.com/redis-developer/basic-redis-rate-limiting-demo-go-lang)
+- [gorrilla/mux](https://github.com/gorilla/mux)
+- [Rate limiting APIs with Redis + Express.js](https://www.youtube.com/watch?v=_DqfiW08HkA)
+- [Rate Limiting Algorithms using Redis](https://medium.com/@SaiRahulAkarapu/rate-limiting-algorithms-using-redis-eb4427b47e33)
+
+### Código del proyecto
+
+[Aquí tienes el repositorio en **GitHub**](https://github.com/kenriortega/app-redis-for-blog) con todo el código utilizado en el artículo. Por si quieres revisarlo.
+
+
