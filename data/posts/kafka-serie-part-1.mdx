@@ -81,7 +81,7 @@ Aquí hay un evento de ejemplo
 Los productores(`producers`) son aquellas aplicaciones cliente que publican (escriben)
 eventos en Kafka,
 y los consumidores (`consumers`) son los que se suscriben (leen y procesan) estos eventos.
-En Kafka, los productores y los consumidores están totalmente desvinculados
+En Kafka, los `producers` y los `consumers` están totalmente desvinculados
 y son independientes entre sí, lo cual es un elemento de diseño clave para lograr
 la alta escalabilidad por la que se conoce a Kafka.
 
@@ -89,11 +89,11 @@ Los eventos se organizan y almacenan de forma duradera en temas (`topics`).
 Muy simplificado,un tema es similar a una carpeta en un sistema de archivos,
 y los eventos son los archivos en esa carpeta.
 Un ejemplo de nombre de tema podría ser "pagos".
-Los temas en Kafka son siempre multi productor y multi suscriptor:
-un tema puede tener cero, uno o muchos productores que escriben eventos en él,
-así como cero, uno o muchos consumidores que se suscriben a estos eventos.
+Los `topics` en Kafka son siempre multi productor y multi suscriptor:
+un tema puede tener cero, uno o muchos `producers` que escriben eventos en él,
+así como cero, uno o muchos `consumers` que se suscriben a estos eventos.
 Los eventos de un tema se pueden leer tantas veces como sea necesario;
-a diferencia de los sistemas de mensajería tradicionales,
+a diferencia de los sis`topics` de mensajería tradicionales,
 los eventos no se eliminan después del consumo.
 En su lugar, usted define durante cuánto tiempo Kafka debe retener
 sus eventos a través de una configuración por tema,
@@ -101,7 +101,7 @@ después de lo cual se descartan los eventos antiguos.
 El rendimiento de Kafka es efectivamente constante con respecto al tamaño de los datos,
 por lo que almacenar datos durante mucho tiempo está perfectamente bien.
 
-Los temas están particionados (`partitions`), lo que significa que un tema se distribuye en varios "cubos"
+Los `topics` están particionados (`partitions`), lo que significa que un tema se distribuye en varios "cubos"
 ubicados en diferentes `brokers` de Kafka. Esta ubicación distribuida de sus datos
 es muy importante para la escalabilidad porque permite que las aplicaciones de
 los clientes lean y escriban los datos desde/hacia muchos `brokers` al mismo tiempo.
