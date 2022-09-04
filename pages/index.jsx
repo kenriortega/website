@@ -55,11 +55,12 @@ export default function Home({ posts }) {
       <Meta title="Kenriortega | blog" />
       <Container maxW="container.1sm" px={[0, 4]}>
         <Heading as="h2" m={8} size="md">
-          Hola 👋 soy Enrique Ortega conocido por @kenriortega y este es mi blog!!
+          Hola 👋 soy Jorge Enrique Ortega conocido por @kenriortega y este es mi blog!!
 
         </Heading>
         <Text m={8} size="md">
-          Estará enfocado el blog a compartir pruebas de conceptos basadas en los siguientes temas golang y grpc. El uso de estos con sistemas de bases de datos como redis, postgresql y brokers de mensajerías como apache kafka. Otras tecnologías que me resultan interesantes como es el framework apache Spark. Entre otras tecnologías que despierten mi curiosidad por seguir aprendeindo.
+          Estará enfocado el blog a compartir pruebas de conceptos basadas en las cosas que investigo o realizo en mi día a día relacionadas con la actividad de Ingeniero de datos `<code>Data Engineer</code>`.
+          Así como el uso de diferentes tecnologías que despierten mi curiosidad por seguir aprendeindo y aplicando en mi carrera como profesional.
         </Text>
         <ScrollToTop />
         <Flex
