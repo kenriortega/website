@@ -1,0 +1,138 @@
+---
+title: 'Introdución a Apache kafka parte 1'
+date: '2022-09-03'
+tags:
+  - '💻 devops'
+  - 'kafka'
+---
+
+
+
+# Introdución a apache kafka
+
+Hace al rededor de 4 annos que trabajo con una de las tecnologias que mas me motiva en el
+mundo del desarrollo de aplicaciones distribuidas y la ingenieria de datos. Su nombre es [apache kafka](https://kafka.apache.org/),
+No voy a mentir la primera vez que escuche su nombre me vino a la mente el siguiente libro
+[La metamorfosis](https://es.wikipedia.org/wiki/La_metamorfosis) escrita por ***Franz Kafka***.
+
+
+Pero si nos dirigimos al sitio oficial de este proyecto de codigo abierto, esta seria la descripcion general que nos ofrece.
+
+***Apache Kafka is an open-source distributed event streaming platform used by thousands of companies for high-performance data pipelines, streaming analytics, data integration, and mission-critical applications.***
+
+Pero para que se usa un `event streaming platform ?`.
+
+- Para procesar(`process`) pagos y transacciones financieras en tiempo real.
+- Para rastrear(`track`) y monitorear(`monitor`) automóviles, camiones, flotas y envíos en tiempo real,
+que tengan impacto en procesos de logística y la industria automotriz.
+- Para capturar(`capture`) y analizar(`analyze`) continuamente datos
+de sensores de dispositivos IoT u otros equipos, como en fábricas.
+- Para recopilar(`collect`) y reaccionar(`react`) de inmediato a las interacciones
+y pedidos de los clientes, como en el comercio minorista, la industria hotelera
+y de viajes, y las aplicaciones móviles.
+- Monitorear(`monitor`) a los pacientes en atención hospitalaria y predecir cambios de
+condición para asegurar un tratamiento oportuno en emergencias.
+- Servir como base para plataformas de datos, arquitecturas basadas
+en eventos y microservicios.
+
+Todos estos casos de usos pueden variar teniendo siempre encuenta la necesidad real
+en la que se mueve nuestro entorno.
+
+#### Caracteristicas que identifican a apache Kafka
+
+*Kafka* combina tres caracteristicas escenciales:
+
+- `publish/subscribe` publicar (escribir) y suscribirse a (leer) flujos de eventos.
+- `store`  almacenar secuencias de eventos de forma duradera y fiable durante el tiempo que se defina.
+- `process`  procesar flujos de eventos a medida que ocurren o retrospectivamente.
+
+Es valido recarcar que estas funcionalidades se comportan de manera distribuida, altamente scalable, elastica, segura y tolerante a fallas.
+Brindando una plataforma confiable y segura para poder llevar a cabo desarrollos de productos digitales que aprovechen al maximo
+estas caracteristicas.
+
+
+#### ¿Cómo funciona Kafka en pocas palabras?
+
+Kafka es un sistema distribuido que consta de servidores y clientes que se comunican a través del protocolo `TCP`.
+Se puede desplegar en hardware básico, máquinas virtuales y contenedores en entornos locales y en la nube.
+
+`Server`: Kafka se ejecuta como un clúster de uno o más servidores.
+Algunos de estos servidores forman la capa de almacenamiento, llamados intermediarios.
+Otros servidores ejecutan `Kafka Connect` para importar y exportar datos como flujos de eventos.
+con la mision de integrar `Kafka` con sistemas existentes, como bases de datos y otros clústeres de Kafka.
+Un clúster de Kafka es altamente escalable y tolerante a fallas:
+si alguno de sus servidores falla, los otros servidores se harán cargo de su trabajo para garantizar operaciones continuas sin pérdida de datos.
+
+`Clients`: Le permiten escribir aplicaciones distribuidas y microservicios que leen, escriben y procesan flujos de eventos 
+en paralelo, con tolerancia a fallas, incluso en el caso de problemas de red o fallas de máquinas.
+
+#### Conceptos principales y terminología
+
+Un evento(`event`) registra el hecho de que "algo sucedió".
+Cuando se lee o escribe datos en Kafka, se realiza en forma de eventos.
+Conceptualmente, un evento tiene una clave, un valor,
+una marca de tiempo ademas de tener encabezados de metadatos opcionales.
+Aquí hay un evento de ejemplo
+
+- Event key: "Alice"
+- Event value: "Made a payment of $200 to Bob"
+- Event timestamp: "Jun. 25, 2022 at 2:06 p.m."
+
+Los productores(`producers`) son aquellas aplicaciones cliente que publican (escriben)
+eventos en Kafka,
+y los consumidores (`consumers`) son los que se suscriben (leen y procesan) estos eventos.
+En Kafka, los productores y los consumidores están totalmente desvinculados
+y son independientes entre sí, lo cual es un elemento de diseño clave para lograr
+la alta escalabilidad por la que se conoce a Kafka.
+
+Los eventos se organizan y almacenan de forma duradera en temas (`topics`).
+Muy simplificado,un tema es similar a una carpeta en un sistema de archivos,
+y los eventos son los archivos en esa carpeta.
+Un ejemplo de nombre de tema podría ser "pagos".
+Los temas en Kafka son siempre multiproductor y multisuscriptor:
+un tema puede tener cero, uno o muchos productores que escriben eventos en él,
+así como cero, uno o muchos consumidores que se suscriben a estos eventos.
+Los eventos de un tema se pueden leer tantas veces como sea necesario;
+a diferencia de los sistemas de mensajería tradicionales,
+los eventos no se eliminan después del consumo.
+En su lugar, usted define durante cuánto tiempo Kafka debe retener
+sus eventos a través de una configuración por tema,
+después de lo cual se descartarán los eventos antiguos.
+El rendimiento de Kafka es efectivamente constante con respecto al tamaño de los datos,
+por lo que almacenar datos durante mucho tiempo está perfectamente bien.
+
+Los temas están particionados (`partitions`), lo que significa que un tema se distribuye en varios "cubos"
+ubicados en diferentes `brokers` de Kafka. Esta ubicación distribuida de sus datos
+es muy importante para la escalabilidad porque permite que las aplicaciones de
+los clientes lean y escriban los datos desde/hacia muchos `brokers` al mismo tiempo.
+Cuando se publica un nuevo evento en un tema, en realidad se agrega a una de
+las particiones del tema. Los eventos con la misma clave de evento
+(por ejemplo, un ID de cliente o de vehículo) se escriben en la misma partición,
+y Kafka garantiza que cualquier consumidor de una partición de tema dada siempre
+leerá los eventos de esa partición exactamente en el mismo orden en que fueron escritos.
+
+Para que sus datos sean tolerantes a fallas y estén altamente disponibles,
+cada tema se puede replicar, incluso entre regiones geográficas o centros de datos,
+de modo que siempre haya varios intermediarios que tengan una copia de
+los datos en caso de que algo salga mal, usted desea hacer el mantenimiento de
+los `brokers`, y así sucesivamente. Una configuración de producción común es un
+factor de replicación de 3, es decir, siempre habrá tres copias de sus datos.
+Esta replicación se realiza a nivel de particiones de tema.
+
+![Kafka Diagram](/kafka/kafka-diagram.jpeg)
+
+##### Primeros pasos con apache kafka
+
+Seguramente si estas en esta parte del articulo querras ver de forma practica como funciona
+esta plataforma al menos en sus aspectos basicos como los descritos en el digrama anterior.
+Para ellos realizaremos el preceso de descarga de la herramienta en su sitio oficial.
+
+[kafka downloads](https://kafka.apache.org/downloads)
+
+```bash
+
+wget https://downloads.apache.org/kafka/3.2.1/kafka_2.13-3.2.1.tgz
+tar -xcvf kafka_2.13-3.2.1.tgz
+```
+
+A la version de este tutorial nos encontramos con la version `kafka_2.13-3.2.1.tgz`
