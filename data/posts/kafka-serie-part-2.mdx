@@ -1,0 +1,105 @@
+---
+title: 'Apache kafka y docker'
+date: '2022-09-18'
+tags:
+- '💻 devops'
+- '🐳 docker'
+- 'kafka'
+---
+
+
+
+# Apache kafka y docker
+
+Hoy os traigo una propuesta simple pero muy eficiente para desplegar apache kafka en nuestro entorno de desarrollo y porque no
+en un servidor modesto en la nube para realizar pruebas de conceptos.
+
+Hoy voy a mostrarles como he utilizado apache kafka y docker en mi dia a dia, para validar posibles propuestas de soluciones para aplicarlas en mis trabajos relacionados con `Data Engineer`
+
+### Requisitos
+
+- Tener instalado docker visitar sitio oficial [docker-desktop](https://docs.docker.com/desktop/)
+
+
+Pues comenzemos primero es necesario comprender que existen muchas imágenes de docker que ofrecen un empaquetado de apache kafka, estas son las que he usado en mis pruebas de conceptos:
+
+- `wurstmeister/kafka`
+- `confluentinc/cp-kafka`
+- `bitnami/kafka`
+
+Ambas son muy buenas y útiles para nuestro caso de uso estaremos usando [`bitnami/kafka`](https://github.com/bitnami/containers/tree/main/bitnami/kafka)
+
+#### Pasos a seguir usando docker-compose
+
+```bash
+touch .env
+```
+
+```bash
+vim .env
+ 
+DOCKER_GATEWAY_HOST=<ip_addres>
+VERSION=latest
+```
+ 
+En este paso crearemos nuestro `docker-compose` para orquestar nuestros contenedores de apache kafka y apache zookeeper.
+
+```bash
+
+touch docker-compose.yaml
+```
+Nuestro archivo de definición de docker-compose, está compuesto por apache zookeeper y apache kafka
+
+
+```yaml
+version: "3.9"
+services:
+  zookeeper:
+    image: 'bitnami/zookeeper:${VERSION}'
+    ports:
+      - '2181:2181'
+    environment:
+      - ALLOW_ANONYMOUS_LOGIN=yes
+  kafka:
+    image: 'bitnami/kafka:${VERSION}'
+    ports:
+      - '9092:9092'
+    environment:
+      - KAFKA_BROKER_ID=1
+      - KAFKA_CFG_LISTENERS=PLAINTEXT://:9092
+      - KAFKA_CFG_ADVERTISED_LISTENERS=PLAINTEXT://${DOCKER_GATEWAY_HOST}:9092
+      - KAFKA_CFG_ZOOKEEPER_CONNECT=zookeeper:2181
+      - ALLOW_PLAINTEXT_LISTENER=yes
+      - KAFKA_CFG_AUTO_CREATE_TOPICS_ENABLE=true
+      - KAFKA_HEAP_OPTS="-Xmx1024m -Xms1024m"
+    depends_on:
+      - zookeeper
+
+  kafdrop:
+    image: obsidiandynamics/kafdrop
+    restart: always
+    ports:
+      - "9001:9000"
+    environment:
+      KAFKA_BROKERCONNECT: "kafka:9092"
+    depends_on:
+      - kafka
+
+
+```
+
+Luego ejecutamos nuestro comando `docker compose up` y accedemos en nuestro navegador `http:<ip_address>:9001` y podemos observar nuestra instancia de kafdrop
+
+
+![Kafka Diagram](/kafka/docker-compose-kafka.jpg)
+
+
+![Kafka Diagram](/kafka/kafdrop.jpeg)
+
+### Recursos
+
+- [Install Confluent Platform using Docker](https://docs.confluent.io/platform/current/installation/docker/installation.html)
+- [docker compose healthcheck](https://docs.docker.com/compose/compose-file/compose-file-v3/#healthcheck)
+
+
+
