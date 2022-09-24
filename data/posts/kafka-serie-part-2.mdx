@@ -1,5 +1,5 @@
 ---
-title: 'Apache kafka y docker'
+title: 'Apache kafka en docker'
 date: '2022-09-18'
 tags:
 - '💻 devops'
@@ -9,7 +9,7 @@ tags:
 
 
 
-# Apache kafka y docker
+# Apache kafka en 🐳
 
 Hoy os traigo una propuesta simple pero muy eficiente para desplegar apache kafka en nuestro entorno de desarrollo y porque no
 en un servidor modesto en la nube para realizar pruebas de conceptos.
@@ -27,7 +27,7 @@ Pues comenzemos primero es necesario comprender que existen muchas imágenes de 
 - `confluentinc/cp-kafka`
 - `bitnami/kafka`
 
-Ambas son muy buenas y útiles para nuestro caso de uso estaremos usando [`bitnami/kafka`](https://github.com/bitnami/containers/tree/main/bitnami/kafka)
+Ambas son muy buenas y útiles, en nuestro caso de uso estaremos usando [` 🐳 bitnami/kafka`](https://github.com/bitnami/containers/tree/main/bitnami/kafka)
 
 #### Pasos a seguir usando docker-compose
 
@@ -41,14 +41,15 @@ vim .env
 DOCKER_GATEWAY_HOST=<ip_addres>
 VERSION=latest
 ```
- 
+> 📌 al usar el comando `docker compose up` si en la misma carpeta se encuentra definido nuestro fichero `.env` de forma automatica cargara las variables de entorno definidas
+
 En este paso crearemos nuestro `docker-compose` para orquestar nuestros contenedores de apache kafka y apache zookeeper.
 
 ```bash
 
 touch docker-compose.yaml
 ```
-Nuestro archivo de definición de docker-compose, está compuesto por apache zookeeper y apache kafka
+Nuestro archivo de definición de docker-compose, está compuesto por apache zookeeper, apache kafka y como valor agregado un cliente UI llamado kafdrop
 
 
 ```yaml
@@ -71,7 +72,6 @@ services:
       - KAFKA_CFG_ZOOKEEPER_CONNECT=zookeeper:2181
       - ALLOW_PLAINTEXT_LISTENER=yes
       - KAFKA_CFG_AUTO_CREATE_TOPICS_ENABLE=true
-      - KAFKA_HEAP_OPTS="-Xmx1024m -Xms1024m"
     depends_on:
       - zookeeper
 
@@ -88,7 +88,12 @@ services:
 
 ```
 
-Luego ejecutamos nuestro comando `docker compose up` y accedemos en nuestro navegador `http:<ip_address>:9001` y podemos observar nuestra instancia de kafdrop
+Las variables de entorno utilizadas para nuetro nodo de kafka describe el comportamiento que presentara el mismo.
+
+- KAFKA_BROKER_ID super importante esta variable ya que identifica a nuestro nodo con un valor distintivo dentro del cluster
+- KAFKA_CFG_ADVERTISED_LISTENERS permite el acceso de sistemas externos a kafka sin que se encuentren nuestra red interna de docker o local.
+
+Luego 🛵 nuestro comando `docker compose up` y accedemos en nuestro navegador `http:<ip_address>:9001` y podemos observar nuestra instancia de kafdrop
 
 
 ![Kafka Diagram](/kafka/docker-compose-kafka.jpg)
@@ -96,10 +101,14 @@ Luego ejecutamos nuestro comando `docker compose up` y accedemos en nuestro nave
 
 ![Kafka Diagram](/kafka/kafdrop.jpeg)
 
+En próximos tutoriales estaremos abordando temas de seguridad como el acceso mediante usuario y contraseñas, y agregaremos un caso de uso simple de un ***producer*** y un ***consumer***.
 ### Recursos
 
 - [Install Confluent Platform using Docker](https://docs.confluent.io/platform/current/installation/docker/installation.html)
 - [docker compose healthcheck](https://docs.docker.com/compose/compose-file/compose-file-v3/#healthcheck)
+- [How to use bitnami/kafka docker](https://github.com/bitnami/containers/tree/main/bitnami/kafka)
 
 
+### Código del proyecto
 
+[Aquí tienes el repositorio en **GitHub**](https://github.com/kenriortega/carpark_availability_sg) con todo el código utilizado en el artículo. Por si quieres revisarlo.
